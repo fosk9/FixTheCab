@@ -9,7 +9,7 @@
             <div class="card-body p-4">
                 <h1 class="h4 mb-3">Edit profile</h1>
 
-                <form asp-controller="Accounts" asp-action="EditProfile" method="post" novalidate>
+                <form asp-controller="Accounts" asp-action="EditProfile" method="post" enctype="multipart/form-data" novalidate>
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="EmployeeId" />
 
@@ -36,7 +36,14 @@
                     <div class="mb-3">
                         <label asp-for="ProfileImagePath" class="form-label"></label>
                         <input asp-for="ProfileImagePath" class="form-control" placeholder="~/img/avatars/me.png or https://..." />
+                        <div class="form-text">You can paste an image link/path OR upload a file below (upload has priority).</div>
                         <span asp-validation-for="ProfileImagePath" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ProfileImageFile" class="form-label"></label>
+                        <input asp-for="ProfileImageFile" class="form-control" type="file" accept="image/*" />
+                        <span asp-validation-for="ProfileImageFile" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">

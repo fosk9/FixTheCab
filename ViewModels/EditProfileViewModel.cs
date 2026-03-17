@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace PMPRacing.ViewModels;
 
@@ -23,6 +24,9 @@ public class EditProfileViewModel
     [StringLength(500)]
     [Display(Name = "Profile image path")]
     public string? ProfileImagePath { get; set; }
+
+    [Display(Name = "Upload profile image")]
+    public IFormFile? ProfileImageFile { get; set; }
 
     [DataType(DataType.Password)]
     [StringLength(100, MinimumLength = 6)]

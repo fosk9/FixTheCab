@@ -62,3 +62,4 @@ wwwroot\microsoft\signalr\dist\browser\signalr.js
 wwwroot\microsoft\signalr\dist\browser\signalr.js.map
 wwwroot\microsoft\signalr\dist\browser\signalr.min.js
 wwwroot\microsoft\signalr\dist\browser\signalr.min.js.map
+wwwroot\uploads\avatars\.keep

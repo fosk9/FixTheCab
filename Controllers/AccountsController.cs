@@ -13,10 +13,12 @@ namespace PMPRacing.Controllers;
 public class AccountsController : Controller
 {
     private readonly PmpRacingContext _db;
+    private readonly IWebHostEnvironment _env;
 
-    public AccountsController(PmpRacingContext db)
+    public AccountsController(PmpRacingContext db, IWebHostEnvironment env)
     {
         _db = db;
+        _env = env;
     }
 
     [AllowAnonymous]
@@ -162,7 +164,40 @@ public class AccountsController : Controller
         employee.Name = model.Name.Trim();
         employee.Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim();
         employee.Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim();
-        employee.ProfileImagePath = string.IsNullOrWhiteSpace(model.ProfileImagePath) ? null : model.ProfileImagePath.Trim();
+
+        if (model.ProfileImageFile is { Length: > 0 })
+        {
+            var ext = Path.GetExtension(model.ProfileImageFile.FileName).ToLowerInvariant();
+            var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".png", ".jpg", ".jpeg", ".webp", ".gif" };
+            if (!allowed.Contains(ext))
+            {
+                ModelState.AddModelError(nameof(model.ProfileImageFile), "Only image files (.png, .jpg, .jpeg, .webp, .gif) are allowed.");
+                return View(model);
+            }
+
+            if (model.ProfileImageFile.Length > 5 * 1024 * 1024)
+            {
+                ModelState.AddModelError(nameof(model.ProfileImageFile), "Image must be 5MB or smaller.");
+                return View(model);
+            }
+
+            var uploadsDir = Path.Combine(_env.WebRootPath, "uploads", "avatars");
+            Directory.CreateDirectory(uploadsDir);
+
+            var fileName = $"{id}_{Guid.NewGuid():N}{ext}";
+            var savePath = Path.Combine(uploadsDir, fileName);
+
+            await using (var stream = System.IO.File.Create(savePath))
+            {
+                await model.ProfileImageFile.CopyToAsync(stream);
+            }
+
+            employee.ProfileImagePath = $"~/uploads/avatars/{fileName}";
+        }
+        else
+        {
+            employee.ProfileImagePath = string.IsNullOrWhiteSpace(model.ProfileImagePath) ? null : model.ProfileImagePath.Trim();
+        }
 
         if (!string.IsNullOrWhiteSpace(model.NewPassword))
             employee.Password = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
