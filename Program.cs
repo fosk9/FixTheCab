@@ -1,7 +1,23 @@
+using PMPRacing;
+using PMPRacing.Models;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+
+// Add DBContext
+builder.Services.AddDbContext<PmpRacingContext>(
+    opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));
+builder.Services.AddScoped(typeof(PmpRacingContext));
+
+// SignalR
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -20,8 +36,10 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+//app.MapControllerRoute(
+//    name: "default",
+//    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+//app.MapHub< >("/ ");
 
 app.Run();
