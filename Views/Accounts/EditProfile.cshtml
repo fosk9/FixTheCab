@@ -1,0 +1,62 @@
+@model EditProfileViewModel
+@{
+    ViewData["Title"] = "Edit profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h4 mb-3">Edit profile</h1>
+
+                <form asp-controller="Accounts" asp-action="EditProfile" method="post" novalidate>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="EmployeeId" />
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Phone" class="form-label"></label>
+                        <input asp-for="Phone" class="form-control" />
+                        <span asp-validation-for="Phone" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ProfileImagePath" class="form-label"></label>
+                        <input asp-for="ProfileImagePath" class="form-control" placeholder="~/img/avatars/me.png or https://..." />
+                        <span asp-validation-for="ProfileImagePath" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NewPassword" class="form-label"></label>
+                        <input asp-for="NewPassword" class="form-control" autocomplete="new-password" />
+                        <div class="form-text">Leave blank to keep current password.</div>
+                        <span asp-validation-for="NewPassword" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a asp-controller="Accounts" asp-action="Profile" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

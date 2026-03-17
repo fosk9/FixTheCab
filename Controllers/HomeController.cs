@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PMPRacing.Models;
 using System.Diagnostics;
+using System.Security.Claims;
 
 namespace PMPRacing.Controllers
 {
@@ -15,7 +16,20 @@ namespace PMPRacing.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            if (User?.Identity?.IsAuthenticated ?? false)
+            {
+                var role = (User.FindFirstValue(ClaimTypes.Role) ?? string.Empty).Trim().ToLowerInvariant();
+                return role switch
+                {
+                    "admin" => RedirectToAction("Index", "Admins"),
+                    "manager" => RedirectToAction("Index", "Managers"),
+                    "cashier" => RedirectToAction("Index", "Cashiers"),
+                    "mechanic" => RedirectToAction("Index", "Mechanics"),
+                    _ => View()
+                };
+            }
+
+            return RedirectToAction("Login", "Accounts");
         }
 
         public IActionResult Privacy()

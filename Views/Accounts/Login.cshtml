@@ -1,0 +1,59 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-sm-10 col-md-7 col-lg-5">
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        }
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h4 mb-1">Sign in</h1>
+                <p class="text-muted mb-4">Use your employee account to continue.</p>
+
+                <form asp-action="Login" asp-controller="Accounts" method="post" novalidate>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="ReturnUrl" />
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" autocomplete="username" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label"></label>
+                        <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Role" class="form-label"></label>
+                        <select asp-for="Role" class="form-select">
+                            <option value="admin">Admin</option>
+                            <option value="manager">Manager</option>
+                            <option value="cashier">Cashier</option>
+                            <option value="mechanic">Mechanic</option>
+                        </select>
+                        <span asp-validation-for="Role" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label"></label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

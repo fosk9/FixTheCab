@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace PMPRacing.Models;
@@ -16,6 +16,8 @@ public partial class Employee
     public string? Role { get; set; }
 
     public string? Password { get; set; }
+
+    public string? ProfileImagePath { get; set; }
 
     public string? Status { get; set; }
 

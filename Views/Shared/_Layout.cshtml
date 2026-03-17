@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -25,6 +25,30 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+                    </ul>
+
+                    <ul class="navbar-nav">
+                        @if (User?.Identity?.IsAuthenticated ?? false)
+                        {
+                            <li class="nav-item">
+                                <span class="navbar-text me-2">Hello, @User.Identity!.Name</span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Accounts" asp-action="Profile">View profile</a>
+                            </li>
+                            <li class="nav-item">
+                                <form asp-controller="Accounts" asp-action="Logout" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-link nav-link text-dark p-0">Logout</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Accounts" asp-action="Login">Login</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>

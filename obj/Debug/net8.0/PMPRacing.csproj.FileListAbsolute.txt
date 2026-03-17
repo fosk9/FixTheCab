@@ -142,10 +142,11 @@ G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\staticwebassets.buil
 G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\staticwebassets.development.json
 G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\staticwebassets.build.endpoints.json
 G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\swae.build.ex.cache
-G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\PMPRacing.csproj.Up2Date
 G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\PMPRacing.dll
 G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\refint\PMPRacing.dll
 G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\PMPRacing.pdb
 G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\PMPRacing.genruntimeconfig.cache
 G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\ref\PMPRacing.dll
+G:\PRN222\FinalProject\PMPRacing\PMPRacing\bin\Debug\net8.0\BCrypt.Net-Next.dll
+G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

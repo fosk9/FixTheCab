@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -88,6 +88,7 @@ public partial class PmpRacingContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(100);
             entity.Property(e => e.Password).HasMaxLength(255);
             entity.Property(e => e.Phone).HasMaxLength(20);
+            entity.Property(e => e.ProfileImagePath).HasMaxLength(500);
             entity.Property(e => e.Role).HasMaxLength(50);
             entity.Property(e => e.Status)
                 .HasMaxLength(20)

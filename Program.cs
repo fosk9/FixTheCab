@@ -1,5 +1,6 @@
 using PMPRacing;
 using PMPRacing.Models;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,17 +8,25 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-
-// Add services to the container.
-builder.Services.AddControllersWithViews();
-
 // Add DBContext
 builder.Services.AddDbContext<PmpRacingContext>(
-    opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));
+    opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped(typeof(PmpRacingContext));
 
 // SignalR
 builder.Services.AddSignalR();
+
+// Auth (Cookie)
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Accounts/Login";
+        options.LogoutPath = "/Accounts/Logout";
+        options.AccessDeniedPath = "/Accounts/Login";
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    });
 
 var app = builder.Build();
 
@@ -34,11 +43,12 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
-//app.MapControllerRoute(
-//    name: "default",
-//    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Accounts}/{action=Login}/{id?}");
 
 //app.MapHub< >("/ ");
 

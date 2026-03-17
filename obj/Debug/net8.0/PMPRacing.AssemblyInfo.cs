@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PMPRacing")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+39134cf3dce8f705953a16177489cfcf1c15f00e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cf3ec38b8b93770045b7d3b6d660d7027f22bf02")]
 [assembly: System.Reflection.AssemblyProductAttribute("PMPRacing")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PMPRacing")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
