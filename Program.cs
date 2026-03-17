@@ -2,6 +2,8 @@ using PMPRacing;
 using PMPRacing.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using PMPRacing.Hubs;
+using PMPRacing.Services.Email;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,14 @@ builder.Services.AddScoped(typeof(PmpRacingContext));
 
 // SignalR
 builder.Services.AddSignalR();
+
+// Cache (OTP, etc.)
+builder.Services.AddMemoryCache();
+
+// Email
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddScoped<EmailApi>();
 
 // Auth (Cookie)
 builder.Services
@@ -50,6 +60,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Accounts}/{action=Login}/{id?}");
 
-//app.MapHub< >("/ ");
+app.MapHub<AdminAccountsHub>("/hubs/adminAccounts");
 
 app.Run();

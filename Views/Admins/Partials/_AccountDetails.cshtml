@@ -1,0 +1,49 @@
+@model PMPRacing.Models.Employee
+@{
+    var pwdId = $"pwd_{Model.EmployeeId}";
+}
+
+<div class="row g-3">
+    <div class="col-12">
+        <div class="d-flex align-items-center gap-3">
+            <img src="@Url.Content(string.IsNullOrWhiteSpace(Model.ProfileImagePath) ? "~/img/avatars/default.svg" : Model.ProfileImagePath)"
+                 class="rounded-circle border"
+                 style="width:56px;height:56px;object-fit:cover;"
+                 alt="avatar" />
+            <div>
+                <div class="h5 mb-0">@Model.Name</div>
+                <div class="text-muted">@Model.Role • @Model.Status</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="fw-semibold">Email</div>
+        <div class="text-muted">@Model.Email</div>
+    </div>
+    <div class="col-md-6">
+        <div class="fw-semibold">Phone</div>
+        <div class="text-muted">@Model.Phone</div>
+    </div>
+    <div class="col-md-6">
+        <div class="fw-semibold">Created at</div>
+        <div class="text-muted">@Model.CreatedAt</div>
+    </div>
+    <div class="col-md-6">
+        <div class="fw-semibold">Password</div>
+        <div class="input-group">
+            <input id="@pwdId" class="form-control" type="password" value="@Model.Password" readonly />
+            <button class="btn btn-outline-primary" type="button" onclick="
+                const el=document.getElementById('@pwdId');
+                el.type = (el.type === 'password') ? 'text' : 'password';
+            " title="Show/hide password">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zm-8 4a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
+                    <path d="M8 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="form-text">Note: stored value (may be hashed).</div>
+    </div>
+</div>
+

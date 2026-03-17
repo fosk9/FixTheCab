@@ -1,5 +1,6 @@
 wwwroot\css\site.css
 wwwroot\favicon.ico
+wwwroot\img\avatars\default.svg
 wwwroot\js\site.js
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map
@@ -63,3 +64,5 @@ wwwroot\microsoft\signalr\dist\browser\signalr.js.map
 wwwroot\microsoft\signalr\dist\browser\signalr.min.js
 wwwroot\microsoft\signalr\dist\browser\signalr.min.js.map
 wwwroot\uploads\avatars\.keep
+wwwroot\uploads\avatars\5_a42e40f5e47c4377ac44b7d1f816f091.jpg
+wwwroot\uploads\avatars\5_c025716b98ec4817805ee9e619f1cba5.jpeg
