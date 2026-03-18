@@ -1,0 +1,559 @@
+@{
+    ViewData["Title"] = "Tạo hóa đơn";
+}
+
+<div class="container-fluid p-0">
+    <div class="row g-0" style="min-height: calc(100vh - 120px);">
+        <!-- Page A: Cart & Search (70%) -->
+        <div class="col-lg-8 col-md-7" style="border-right: 1px solid #dee2e6;">
+            <div class="d-flex flex-column h-100">
+                <!-- Header -->
+                <div class="p-3 bg-light border-bottom">
+                    <h4 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Tạo hóa đơn mới</h4>
+                </div>
+                
+                <!-- Search Section -->
+                <div class="p-3 border-bottom">
+                    <div class="position-relative">
+                        <label class="form-label fw-bold">Tìm kiếm dịch vụ / phụ tùng:</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Nhập tên dịch vụ hoặc phụ tùng..." autocomplete="off">
+                        </div>
+                        <!-- Search Results Dropdown -->
+                        <div id="searchResults" class="position-absolute w-100 bg-white border shadow-sm rounded-bottom" style="z-index: 1000; max-height: 300px; overflow-y: auto; display: none;">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cart Items List (Scrollable) -->
+                <div class="flex-grow-1 overflow-auto p-3" style="max-height: calc(100vh - 350px);">
+                    <div id="cartEmpty" class="text-center text-muted py-5">
+                        <i class="fas fa-cart-plus fa-3x mb-3"></i>
+                        <p>Chưa có sản phẩm nào trong giỏ hàng.<br>Nhập từ khóa ở ô tìm kiếm để thêm dịch vụ hoặc phụ tùng.</p>
+                    </div>
+                    <div id="cartItems" class="list-group">
+                        <!-- Cart items will be added here dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Floating Bottom Bar -->
+                <div class="p-3 bg-light border-top" style="position: sticky; bottom: 0; z-index: 100;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" id="clearCart" class="btn btn-outline-danger">
+                            <i class="fas fa-trash-alt me-2"></i>Xóa tất cả
+                        </button>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="text-muted">Tổng tiền:</span>
+                            <span id="totalPrice" class="fs-3 fw-bold text-success">0 VNĐ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Page B: Customer Info (30%) -->
+        <div class="col-lg-4 col-md-5 bg-white">
+            <div class="p-3 h-100 d-flex flex-column">
+                <h5 class="mb-3"><i class="fas fa-user me-2"></i>Thông tin khách hàng</h5>
+                
+                <form id="invoiceForm" class="flex-grow-1">
+                    @Html.AntiForgeryToken()
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Tên khách hàng <span class="text-danger">*</span></label>
+                        <input type="text" id="customerName" class="form-control" required placeholder="Nhập tên khách hàng">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Model xe</label>
+                        <input type="text" id="bikeModel" class="form-control" placeholder="VD: Honda Wave Alpha">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Biển số xe</label>
+                        <input type="text" id="licensePlate" class="form-control" placeholder="VD: 51F-123.45">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Số điện thoại</label>
+                        <input type="tel" id="customerPhone" class="form-control" placeholder="VD: 0901234567">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Email <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="email" id="customerEmail" class="form-control" required placeholder="email@example.com">
+                            <button type="button" id="sendOtpBtn" class="btn btn-outline-primary">
+                                <i class="fas fa-paper-plane"></i> Gửi OTP
+                            </button>
+                        </div>
+                        <div id="otpMessage" class="form-text"></div>
+                    </div>
+                    
+                    <div class="mb-3" id="otpSection" style="display: none;">
+                        <label class="form-label">Mã OTP</label>
+                        <div class="input-group">
+                            <input type="text" id="otpCode" class="form-control" placeholder="Nhập mã OTP 6 số" maxlength="6">
+                            <button type="button" id="verifyOtpBtn" class="btn btn-outline-success">
+                                <i class="fas fa-check"></i> Xác nhận
+                            </button>
+                        </div>
+                        <div id="otpVerifyMessage" class="form-text"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea id="notes" class="form-control" rows="3" placeholder="Ghi chú về hóa đơn..."></textarea>
+                    </div>
+                    
+                    <div class="mt-auto">
+                        <button type="submit" id="confirmBtn" class="btn btn-success w-100 btn-lg" disabled>
+                            <i class="fas fa-credit-card me-2"></i>Xác nhận & Thanh toán
+                        </button>
+                        <div id="formMessage" class="text-center mt-2 text-danger small"></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PayOS Payment Modal -->
+<div class="modal fade" id="payOSModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-credit-card me-2"></i>Thanh toán qua PayOS</h5>
+            </div>
+            <div class="modal-body text-center p-5">
+                <div id="payOSLoading">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-muted">Đang tạo link thanh toán...</p>
+                </div>
+                
+                <div id="payOSContent" style="display: none;">
+                    <div class="mb-4">
+                        <h4 class="text-success mb-3" id="payOSAmount">0 VNĐ</h4>
+                        <p class="text-muted">Mã đơn hàng: <strong id="payOSOrderId">#0</strong></p>
+                    </div>
+                    
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Vui lòng hoàn tất thanh toán trong cửa sổ mới. Sau khi thanh toán xong, hệ thống sẽ tự động cập nhật.
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a id="payOSLink" href="#" target="_blank" class="btn btn-success btn-lg">
+                            <i class="fas fa-external-link-alt me-2"></i>Mở trang thanh toán
+                        </a>
+                        <button type="button" id="simulatePaymentBtn" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-check-circle me-2"></i>Giả lập thanh toán thành công
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Cart state
+        let cart = [];
+        let isOtpVerified = false;
+        let currentOrderId = null;
+        
+        // DOM Elements
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const cartItems = document.getElementById('cartItems');
+        const cartEmpty = document.getElementById('cartEmpty');
+        const totalPriceEl = document.getElementById('totalPrice');
+        const clearCartBtn = document.getElementById('clearCart');
+        const customerEmail = document.getElementById('customerEmail');
+        const sendOtpBtn = document.getElementById('sendOtpBtn');
+        const otpSection = document.getElementById('otpSection');
+        const otpCode = document.getElementById('otpCode');
+        const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const formMessage = document.getElementById('formMessage');
+        
+        // Search functionality
+        let searchTimeout;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                searchServices(query);
+            }, 300);
+        });
+        
+        async function searchServices(query) {
+            try {
+                const res = await fetch('@Url.Action("SearchServices","Cashiers")' + '?query=' + encodeURIComponent(query));
+                const results = await res.json();
+                displaySearchResults(results);
+            } catch (err) {
+                console.error('Search error:', err);
+            }
+        }
+        
+        function displaySearchResults(results) {
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="p-3 text-muted text-center">Không tìm thấy kết quả</div>';
+            } else {
+                searchResults.innerHTML = results.map(item => `
+                    <div class="p-3 border-bottom hover-bg-light cursor-pointer" onclick="addToCart(${item.id}, '${item.itemType}', '${item.name}', ${item.price || 0}, ${item.stock || 'null'})" style="cursor: pointer;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge ${item.itemType === 'Service' ? 'bg-primary' : 'bg-info'} me-2">${item.itemType === 'Service' ? 'DV' : 'PT'}</span>
+                                <strong>${item.name}</strong>
+                                ${item.stock !== null ? `<small class="text-muted">(Tồn: ${item.stock})</small>` : ''}
+                            </div>
+                            <span class="text-success fw-bold">${(item.price || 0).toLocaleString('vi-VN')} VNĐ</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            searchResults.style.display = 'block';
+        }
+        
+        // Hide search results when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#searchInput') && !e.target.closest('#searchResults')) {
+                searchResults.style.display = 'none';
+            }
+        });
+        
+        // Add to cart
+        function addToCart(id, itemType, name, price, stock) {
+            const existingItem = cart.find(i => i.itemId === id && i.itemType === itemType);
+            
+            if (existingItem) {
+                if (itemType === 'Part' && stock !== null && existingItem.quantity >= stock) {
+                    alert('Số lượng tồn kho không đủ!');
+                    return;
+                }
+                existingItem.quantity++;
+            } else {
+                cart.push({
+                    itemId: id,
+                    itemType: itemType,
+                    name: name,
+                    unitPrice: price,
+                    quantity: 1
+                });
+            }
+            
+            searchResults.style.display = 'none';
+            searchInput.value = '';
+            updateCartDisplay();
+        }
+        
+        // Update quantity
+        function updateQuantity(index, delta) {
+            const item = cart[index];
+            item.quantity += delta;
+            
+            if (item.quantity <= 0) {
+                cart.splice(index, 1);
+            }
+            
+            updateCartDisplay();
+        }
+        
+        // Remove item
+        function removeItem(index) {
+            cart.splice(index, 1);
+            updateCartDisplay();
+        }
+        
+        // Update cart display
+        function updateCartDisplay() {
+            if (cart.length === 0) {
+                cartEmpty.style.display = 'block';
+                cartItems.innerHTML = '';
+            } else {
+                cartEmpty.style.display = 'none';
+                cartItems.innerHTML = cart.map((item, index) => `
+                    <div class="list-group-item p-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-1 text-center">
+                                <div class="bg-light rounded p-2">
+                                    <i class="fas ${item.itemType === 'Service' ? 'fa-wrench' : 'fa-cog'} fa-lg text-secondary"></i>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="badge ${item.itemType === 'Service' ? 'bg-primary' : 'bg-info'} me-1">${item.itemType === 'Service' ? 'Dịch vụ' : 'Phụ tùng'}</span>
+                                <div class="fw-bold">${item.name}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group input-group-sm">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(${index}, -1)">-</button>
+                                    <input type="text" class="form-control text-center" value="${item.quantity}" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(${index}, 1)">+</button>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <div class="fw-bold text-success">${(item.unitPrice * item.quantity).toLocaleString('vi-VN')} VNĐ</div>
+                                <small class="text-muted">${item.unitPrice.toLocaleString('vi-VN')} / đơn vị</small>
+                            </div>
+                            <div class="col-md-1 text-end">
+                                <button class="btn btn-outline-danger btn-sm" onclick="removeItem(${index})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            const total = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+            totalPriceEl.textContent = total.toLocaleString('vi-VN') + ' VNĐ';
+            
+            updateConfirmButton();
+        }
+        
+        // Clear cart
+        clearCartBtn.addEventListener('click', () => {
+            if (cart.length > 0 && confirm('Bạn có chắc muốn xóa tất cả sản phẩm?')) {
+                cart = [];
+                updateCartDisplay();
+            }
+        });
+        
+        // OTP functionality
+        sendOtpBtn.addEventListener('click', async () => {
+            const email = customerEmail.value.trim();
+            if (!email) {
+                showMessage('otpMessage', 'Vui lòng nhập email trước', 'text-danger');
+                return;
+            }
+            
+            try {
+                sendOtpBtn.disabled = true;
+                sendOtpBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                
+                const res = await fetch('@Url.Action("SendInvoiceOtp","Cashiers")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ email: email, __RequestVerificationToken: document.querySelector('input[name="__RequestVerificationToken"]').value })
+                });
+                
+                if (res.ok) {
+                    showMessage('otpMessage', 'OTP đã được gửi. Vui lòng kiểm tra email.', 'text-success');
+                    otpSection.style.display = 'block';
+                } else {
+                    const text = await res.text();
+                    showMessage('otpMessage', text, 'text-danger');
+                }
+            } catch (err) {
+                showMessage('otpMessage', 'Gửi OTP thất bại', 'text-danger');
+            } finally {
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi OTP';
+            }
+        });
+        
+        verifyOtpBtn.addEventListener('click', async () => {
+            const email = customerEmail.value.trim();
+            const otp = otpCode.value.trim();
+            
+            if (!otp) {
+                showMessage('otpVerifyMessage', 'Vui lòng nhập mã OTP', 'text-danger');
+                return;
+            }
+            
+            try {
+                verifyOtpBtn.disabled = true;
+                
+                const res = await fetch('@Url.Action("VerifyInvoiceOtp","Cashiers")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ 
+                        email: email, 
+                        otpCode: otp,
+                        __RequestVerificationToken: document.querySelector('input[name="__RequestVerificationToken"]').value 
+                    })
+                });
+                
+                if (res.ok) {
+                    isOtpVerified = true;
+                    showMessage('otpVerifyMessage', 'OTP đã được xác nhận!', 'text-success');
+                    customerEmail.disabled = true;
+                    otpSection.style.display = 'none';
+                    updateConfirmButton();
+                } else {
+                    const text = await res.text();
+                    showMessage('otpVerifyMessage', text, 'text-danger');
+                }
+            } catch (err) {
+                showMessage('otpVerifyMessage', 'Xác nhận OTP thất bại', 'text-danger');
+            } finally {
+                verifyOtpBtn.disabled = false;
+            }
+        });
+        
+        function showMessage(elementId, message, className) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = 'form-text ' + className;
+        }
+        
+        function updateConfirmButton() {
+            const canConfirm = cart.length > 0 && 
+                              document.getElementById('customerName').value.trim() &&
+                              customerEmail.value.trim() &&
+                              isOtpVerified;
+            
+            confirmBtn.disabled = !canConfirm;
+            
+            if (cart.length === 0) {
+                formMessage.textContent = 'Vui lòng thêm ít nhất một sản phẩm';
+            } else if (!isOtpVerified) {
+                formMessage.textContent = 'Vui lòng xác nhận OTP';
+            } else {
+                formMessage.textContent = '';
+            }
+        }
+        
+        // Form validation
+        document.getElementById('customerName').addEventListener('input', updateConfirmButton);
+        customerEmail.addEventListener('input', () => {
+            isOtpVerified = false;
+            otpSection.style.display = 'none';
+            customerEmail.disabled = false;
+            updateConfirmButton();
+        });
+        
+        // Form submission
+        document.getElementById('invoiceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!isOtpVerified) {
+                alert('Vui lòng xác nhận OTP trước khi thanh toán');
+                return;
+            }
+            
+            const model = {
+                cartItems: cart.map(item => ({
+                    itemId: item.itemId,
+                    itemType: item.itemType,
+                    name: item.name,
+                    unitPrice: item.unitPrice,
+                    quantity: item.quantity
+                })),
+                customerName: document.getElementById('customerName').value.trim(),
+                bikeModel: document.getElementById('bikeModel').value.trim(),
+                licensePlate: document.getElementById('licensePlate').value.trim(),
+                customerPhone: document.getElementById('customerPhone').value.trim(),
+                customerEmail: customerEmail.value.trim(),
+                isOtpVerified: true,
+                notes: document.getElementById('notes').value.trim()
+            };
+            
+            try {
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...';
+                
+                const res = await fetch('@Url.Action("CreateInvoice","Cashiers")', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify(model)
+                });
+                
+                if (res.ok) {
+                    const result = await res.json();
+                    currentOrderId = result.orderId;
+                    
+                    // Show PayOS modal
+                    const payOSModal = new bootstrap.Modal(document.getElementById('payOSModal'));
+                    payOSModal.show();
+                    
+                    // Create PayOS payment
+                    createPayOSPayment(result.orderId, cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0), model.customerEmail);
+                } else {
+                    const text = await res.text();
+                    alert('Tạo hóa đơn thất bại: ' + text);
+                }
+            } catch (err) {
+                alert('Lỗi: ' + err.message);
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Xác nhận & Thanh toán';
+            }
+        });
+        
+        async function createPayOSPayment(orderId, amount, customerEmail) {
+            try {
+                const res = await fetch('@Url.Action("CreatePayOSPayment","Cashiers")', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({
+                        orderId: orderId,
+                        amount: amount,
+                        description: `Payment for order #${orderId}`,
+                        customerEmail: customerEmail,
+                        returnUrl: window.location.origin + '/Cashiers/PaymentSuccess',
+                        cancelUrl: window.location.origin + '/Cashiers/CreateInvoice'
+                    })
+                });
+                
+                if (res.ok) {
+                    const result = await res.json();
+                    document.getElementById('payOSLoading').style.display = 'none';
+                    document.getElementById('payOSContent').style.display = 'block';
+                    document.getElementById('payOSAmount').textContent = amount.toLocaleString('vi-VN') + ' VNĐ';
+                    document.getElementById('payOSOrderId').textContent = '#' + orderId;
+                    document.getElementById('payOSLink').href = result.paymentUrl;
+                } else {
+                    const text = await res.text();
+                    document.getElementById('payOSLoading').innerHTML = `<div class="alert alert-danger">${text}</div>`;
+                }
+            } catch (err) {
+                document.getElementById('payOSLoading').innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+            }
+        }
+        
+        // Simulate payment (for testing)
+        document.getElementById('simulatePaymentBtn').addEventListener('click', async () => {
+            if (!currentOrderId) return;
+            
+            try {
+                const res = await fetch('@Url.Action("ConfirmPayOSPayment","Cashiers")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ 
+                        orderId: currentOrderId,
+                        __RequestVerificationToken: document.querySelector('input[name="__RequestVerificationToken"]').value 
+                    })
+                });
+                
+                if (res.ok) {
+                    alert('Thanh toán thành công!');
+                    window.location.href = '@Url.Action("Invoices","Cashiers")';
+                } else {
+                    const text = await res.text();
+                    alert('Thanh toán thất bại: ' + text);
+                }
+            } catch (err) {
+                alert('Lỗi: ' + err.message);
+            }
+        });
+    </script>
+}

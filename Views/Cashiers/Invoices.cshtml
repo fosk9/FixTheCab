@@ -1,0 +1,154 @@
+@{
+    ViewData["Title"] = "Quản lý hóa đơn";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h4 mb-0">Quản lý hóa đơn</h1>
+        <div class="text-muted">Quản lý hóa đơn dịch vụ và báo giá cho khách hàng.</div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Tìm kiếm</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="invoiceSearchInput" placeholder="Tìm theo biển số, tên khách hàng...">
+                    <button class="btn btn-outline-secondary" type="button" id="clearInvoiceSearch">Xóa</button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Trạng thái</label>
+                <select class="form-select" id="invoiceStatusFilter">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="pending">Chờ xử lý</option>
+                    <option value="quoted">Đã báo giá</option>
+                    <option value="in_progress">Đang xử lý</option>
+                    <option value="completed">Hoàn thành</option>
+                    <option value="cancelled">Đã hủy</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-primary w-100" type="button" id="applyInvoiceFilters">Lọc</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div id="invoiceTableWrap" class="p-3">
+            <div class="text-muted">Đang tải...</div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="invoiceOverlay" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="invoiceOverlayTitle">...</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="invoiceOverlayBody">
+                ...
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+        const invoiceOverlayEl = document.getElementById('invoiceOverlay');
+        const invoiceOverlay = new bootstrap.Modal(invoiceOverlayEl);
+
+        async function loadInvoiceTable(search = "", status = "") {
+            const wrap = document.getElementById('invoiceTableWrap');
+            const params = new URLSearchParams({ search, status });
+            const res = await fetch('@Url.Action("InvoiceTable","Cashiers")' + '?' + params.toString(), { headers: { 'X-Requested-With': 'fetch' } });
+            wrap.innerHTML = await res.text();
+        }
+
+        async function openInvoiceOverlay(title, url) {
+            document.getElementById('invoiceOverlayTitle').innerText = title;
+            document.getElementById('invoiceOverlayBody').innerHTML = '<div class="text-muted">Đang tải...</div>';
+            invoiceOverlay.show();
+            const res = await fetch(url, { headers: { 'X-Requested-With': 'fetch' } });
+            document.getElementById('invoiceOverlayBody').innerHTML = await res.text();
+        }
+
+        function formUrlEncoded(obj) {
+            return Object.keys(obj).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(obj[k] ?? '')).join('&');
+        }
+
+        // Search and filter functionality
+        document.getElementById('clearInvoiceSearch').addEventListener('click', () => {
+            document.getElementById('invoiceSearchInput').value = '';
+            document.getElementById('invoiceStatusFilter').value = '';
+            loadInvoiceTable();
+        });
+
+        document.getElementById('applyInvoiceFilters').addEventListener('click', () => {
+            const search = document.getElementById('invoiceSearchInput').value;
+            const status = document.getElementById('invoiceStatusFilter').value;
+            loadInvoiceTable(search, status);
+        });
+
+        // Real-time search on Enter key
+        document.getElementById('invoiceSearchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const search = e.target.value;
+                const status = document.getElementById('invoiceStatusFilter').value;
+                loadInvoiceTable(search, status);
+            }
+        });
+
+        // Auto-apply filters on dropdown change
+        document.getElementById('invoiceStatusFilter').addEventListener('change', () => {
+            const search = document.getElementById('invoiceSearchInput').value;
+            const status = document.getElementById('invoiceStatusFilter').value;
+            loadInvoiceTable(search, status);
+        });
+
+        // Handle action buttons
+        document.addEventListener('click', async (e) => {
+            const btn = e.target.closest('[data-invoice-action]');
+            if (!btn) return;
+            const action = btn.getAttribute('data-invoice-action');
+            const id = btn.getAttribute('data-id');
+
+            if (action === 'details') {
+                await openInvoiceOverlay('Chi tiết hóa đơn', '@Url.Action("InvoiceDetails","Cashiers")' + '?id=' + id);
+            }
+            if (action === 'quote') {
+                await openInvoiceOverlay('Tạo báo giá', '@Url.Action("CreateQuote","Cashiers")' + '?id=' + id);
+            }
+        });
+
+        // Handle form submissions
+        document.addEventListener('submit', async (e) => {
+            const form = e.target;
+            if (!form.matches('[data-invoice-form]')) return;
+            e.preventDefault();
+
+            const action = form.getAttribute('data-invoice-form');
+            const data = new FormData(form);
+
+            if (action === 'sendQuote') {
+                const res = await fetch(form.action, { method: 'POST', body: data });
+                const json = await res.json();
+                if (json.ok) {
+                    invoiceOverlay.hide();
+                    loadInvoiceTable();
+                } else {
+                    alert('Gửi báo giá thất bại. Vui lòng thử lại.');
+                }
+            }
+        });
+
+        loadInvoiceTable();
+    </script>
+}
