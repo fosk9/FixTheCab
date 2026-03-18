@@ -142,17 +142,20 @@
                     
                     <div class="alert alert-info mb-4">
                         <i class="fas fa-info-circle me-2"></i>
-                        Vui lòng hoàn tất thanh toán trong cửa sổ mới. Sau khi thanh toán xong, hệ thống sẽ tự động cập nhật.
+                        Bạn sẽ được chuyển đến trang thanh toán PayOS. Sau khi thanh toán xong, vui lòng quay lại hệ thống.
                     </div>
                     
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                        <a id="payOSLink" href="#" target="_blank" class="btn btn-success btn-lg">
-                            <i class="fas fa-external-link-alt me-2"></i>Mở trang thanh toán
-                        </a>
-                        <button type="button" id="simulatePaymentBtn" class="btn btn-outline-primary btn-lg">
-                            <i class="fas fa-check-circle me-2"></i>Giả lập thanh toán thành công
+                    <div class="d-grid gap-2">
+                        <button type="button" id="proceedPaymentBtn" class="btn btn-success btn-lg">
+                            <i class="fas fa-arrow-right me-2"></i>Tiếp tục thanh toán
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Hủy
                         </button>
                     </div>
+                    
+                    <!-- Hidden link for redirection -->
+                    <a id="payOSLink" href="#" style="display: none;"></a>
                 </div>
             </div>
         </div>
@@ -530,29 +533,11 @@
             }
         }
         
-        // Simulate payment (for testing)
-        document.getElementById('simulatePaymentBtn').addEventListener('click', async () => {
-            if (!currentOrderId) return;
-            
-            try {
-                const res = await fetch('@Url.Action("ConfirmPayOSPayment","Cashiers")', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ 
-                        orderId: currentOrderId,
-                        __RequestVerificationToken: document.querySelector('input[name="__RequestVerificationToken"]').value 
-                    })
-                });
-                
-                if (res.ok) {
-                    alert('Thanh toán thành công!');
-                    window.location.href = '@Url.Action("Invoices","Cashiers")';
-                } else {
-                    const text = await res.text();
-                    alert('Thanh toán thất bại: ' + text);
-                }
-            } catch (err) {
-                alert('Lỗi: ' + err.message);
+        // Proceed to PayOS payment page
+        document.getElementById('proceedPaymentBtn').addEventListener('click', () => {
+            const paymentUrl = document.getElementById('payOSLink').href;
+            if (paymentUrl && paymentUrl !== '#') {
+                window.location.href = paymentUrl;
             }
         });
     </script>
