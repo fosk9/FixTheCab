@@ -1,7 +1,7 @@
 @model PMPRacing.Models.Employee
 @{
     ViewData["Title"] = "Profile";
-    var img = string.IsNullOrWhiteSpace(Model.ProfileImagePath) ? "~/img/avatars/default.png" : Model.ProfileImagePath;
+    var img = string.IsNullOrWhiteSpace(Model.ProfileImagePath) ? "~/img/avatars/default.svg" : Model.ProfileImagePath;
 }
 
 <div class="row justify-content-center">
@@ -25,9 +25,6 @@
 
                     <dt class="col-sm-3">Status</dt>
                     <dd class="col-sm-9">@Model.Status</dd>
-
-                    <dt class="col-sm-3">Image path</dt>
-                    <dd class="col-sm-9">@Model.ProfileImagePath</dd>
                 </dl>
 
                 <div class="mt-4">

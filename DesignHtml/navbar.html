@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PMP Racing Navbar Design</title>
+  <link href="../wwwroot/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+  <nav class="navbar navbar-expand-sm bg-white border-bottom">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-semibold" href="#">PMPRacing</a>
+      <div class="ms-auto d-flex align-items-center gap-2">
+        <a class="btn btn-primary btn-sm" href="#">Home</a>
+        <div class="dropdown">
+          <button class="btn btn-primary btn-sm dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown">
+            <img src="https://via.placeholder.com/24" class="rounded-circle" width="24" height="24" alt="avatar" />
+            <span>Account</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="#">View Profile</a></li>
+            <li><a class="dropdown-item" href="#">Edit Profile</a></li>
+            <li><a class="dropdown-item" href="#">Change Password</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <button class="dropdown-item text-danger">
+                <span class="me-1">🚪</span> Logout
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <script src="../wwwroot/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

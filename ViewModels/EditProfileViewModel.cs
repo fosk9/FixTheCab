@@ -27,10 +27,5 @@ public class EditProfileViewModel
 
     [Display(Name = "Upload profile image")]
     public IFormFile? ProfileImageFile { get; set; }
-
-    [DataType(DataType.Password)]
-    [StringLength(100, MinimumLength = 6)]
-    [Display(Name = "New password")]
-    public string? NewPassword { get; set; }
 }
 

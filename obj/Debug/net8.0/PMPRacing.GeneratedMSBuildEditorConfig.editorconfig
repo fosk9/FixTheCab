@@ -22,6 +22,10 @@ build_property._RazorSourceGeneratorDebug =
 build_property.EffectiveAnalysisLevelStyle = 8.0
 build_property.EnableCodeStyleSeverity = 
 
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Accounts/ChangePassword.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudHNcQ2hhbmdlUGFzc3dvcmQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Accounts/EditProfile.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudHNcRWRpdFByb2ZpbGUuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
@@ -34,8 +38,28 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudHNcUHJvZmlsZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Admins/Accounts.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5zXEFjY291bnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Admins/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5zXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Admins/Partials/_AccountCreate.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5zXFBhcnRpYWxzXF9BY2NvdW50Q3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Admins/Partials/_AccountDetails.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5zXFBhcnRpYWxzXF9BY2NvdW50RGV0YWlscy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Admins/Partials/_AccountEdit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5zXFBhcnRpYWxzXF9BY2NvdW50RWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Admins/Partials/_AccountsTable.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5zXFBhcnRpYWxzXF9BY2NvdW50c1RhYmxlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/Index.cshtml]

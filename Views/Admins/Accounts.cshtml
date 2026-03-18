@@ -1,0 +1,299 @@
+@{
+    ViewData["Title"] = "Manage accounts";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h4 mb-0">Accounts</h1>
+        <div class="text-muted">Manage staff accounts (admin / manager / cashier / mechanic).</div>
+    </div>
+    <button class="btn btn-primary" type="button" id="btnCreateAccount">Create account</button>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Search</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search by name, email, phone...">
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearch">Clear</button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Role Filter</label>
+                <select class="form-select" id="roleFilter">
+                    <option value="">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="manager">Manager</option>
+                    <option value="cashier">Cashier</option>
+                    <option value="mechanic">Mechanic</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status Filter</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="locked">Locked</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-primary w-100" type="button" id="applyFilters">Apply Filters</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div id="accountsTableWrap" class="p-3">
+            <div class="text-muted">Loading...</div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="adminOverlay" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="adminOverlayTitle">...</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="adminOverlayBody">
+                ...
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+        const overlayEl = document.getElementById('adminOverlay');
+        const overlay = new bootstrap.Modal(overlayEl);
+
+        async function loadTable(search = "", role = "", status = "") {
+            const wrap = document.getElementById('accountsTableWrap');
+            const params = new URLSearchParams({ search, role, status });
+            const res = await fetch('@Url.Action("AccountsTable","Admins")' + '?' + params.toString(), { headers: { 'X-Requested-With': 'fetch' } });
+            wrap.innerHTML = await res.text();
+        }
+
+        async function openOverlay(title, url) {
+            document.getElementById('adminOverlayTitle').innerText = title;
+            document.getElementById('adminOverlayBody').innerHTML = '<div class="text-muted">Loading...</div>';
+            overlay.show();
+            const res = await fetch(url, { headers: { 'X-Requested-With': 'fetch' } });
+            document.getElementById('adminOverlayBody').innerHTML = await res.text();
+        }
+
+        function formUrlEncoded(obj) {
+            return Object.keys(obj).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(obj[k] ?? '')).join('&');
+        }
+
+        document.addEventListener('click', async (e) => {
+            const btn = e.target.closest('[data-admin-action]');
+            if (!btn) return;
+            const action = btn.getAttribute('data-admin-action');
+            const id = btn.getAttribute('data-id');
+
+            if (action === 'details') {
+                await openOverlay('Account details', '@Url.Action("AccountDetails","Admins")' + '?id=' + id);
+            }
+            if (action === 'edit') {
+                await openOverlay('Edit account', '@Url.Action("AccountEdit","Admins")' + '?id=' + id);
+            }
+            if (action === 'disable') {
+                if (!confirm('Disable this account?')) return;
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                const res = await fetch('@Url.Action("AccountDisable","Admins")' + '?id=' + id, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formUrlEncoded({ __RequestVerificationToken: token })
+                });
+                const json = await res.json();
+                if (json.ok) await loadTable();
+            }
+        });
+
+        document.getElementById('btnCreateAccount').addEventListener('click', async () => {
+            await openOverlay('Create account', '@Url.Action("AccountCreate","Admins")');
+        });
+
+        document.addEventListener('submit', async (e) => {
+            const form = e.target;
+            if (!form.matches('[data-admin-form]')) return;
+            e.preventDefault();
+
+            const action = form.getAttribute('data-admin-form');
+            const data = new FormData(form);
+
+            if (action === 'edit') {
+                const res = await fetch(form.action, { method: 'POST', body: data });
+                const ct = res.headers.get('content-type') || '';
+                if (ct.includes('application/json')) {
+                    const json = await res.json();
+                    if (json.ok) {
+                        overlay.hide();
+                        // table will refresh via SignalR
+                    }
+                } else {
+                    document.getElementById('adminOverlayBody').innerHTML = await res.text();
+                }
+            }
+
+            if (action === 'create') {
+                // Always take the email from the visible input to avoid stale hidden values
+                const email = document.getElementById('createEmail')?.value;
+                if (!email) {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">Email is required.</div>';
+                    return;
+                }
+                if (email) data.set('Email', email);
+
+                // Validate required fields before sending
+                const name = data.get('Name');
+                const password = data.get('Password');
+                
+                if (!name || !name.trim()) {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">Name is required.</div>';
+                    return;
+                }
+                if (!password || password.length < 6) {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">Password must be at least 6 characters.</div>';
+                    return;
+                }
+
+                const res = await fetch(form.action, { method: 'POST', body: data });
+                const ct = res.headers.get('content-type') || '';
+                if (ct.includes('application/json')) {
+                    const json = await res.json();
+                    if (json.ok) {
+                        // Disable/close create UI and show success message (no refresh)
+                        const body = document.getElementById('adminOverlayBody');
+                        const details = document.getElementById('createDetails');
+                        if (details) details.classList.add('d-none');
+                        const otpMsg = document.getElementById('otpMsg');
+                        if (otpMsg) otpMsg.innerHTML = '<div class="alert alert-success mb-0">Employee created successfully.</div>';
+                        body.querySelectorAll('input,select,button').forEach(el => {
+                            if (el.closest('form') && el.closest('form').getAttribute('data-admin-form') === 'create') el.disabled = true;
+                        });
+                    } else {
+                        document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">Failed to create account. Please try again.</div>';
+                    }
+                } else {
+                    document.getElementById('adminOverlayBody').innerHTML = await res.text();
+                }
+            }
+
+            if (action === 'sendOtp') {
+                const token = data.get('__RequestVerificationToken');
+                const email = document.getElementById('createEmail')?.value || data.get('Email');
+                if (!email) {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">Email is required.</div>';
+                    return;
+                }
+                const res = await fetch('@Url.Action("SendCreateOtp","Admins")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formUrlEncoded({ __RequestVerificationToken: token, email })
+                });
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">' + errorText + '</div>';
+                } else {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-success mb-0">OTP sent. Check inbox/spam.</div>';
+                    document.getElementById('createOtp').disabled = false;
+                }
+            }
+
+            if (action === 'verifyOtp') {
+                const token = data.get('__RequestVerificationToken');
+                const Email = document.getElementById('createEmail')?.value || data.get('Email');
+                const OtpCode = document.getElementById('createOtp')?.value || data.get('OtpCode');
+                
+                if (!Email) {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">Email is required.</div>';
+                    return;
+                }
+                if (!OtpCode) {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">OTP code is required.</div>';
+                    return;
+                }
+                
+                const res = await fetch('@Url.Action("VerifyCreateOtp","Admins")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formUrlEncoded({ __RequestVerificationToken: token, Email, OtpCode })
+                });
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">' + errorText + '</div>';
+                } else {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-success mb-0">OTP verified. You can fill account details now.</div>';
+                    document.getElementById('createDetails').classList.remove('d-none');
+                }
+            }
+        });
+
+        // SignalR live updates
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/adminAccounts")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("accountsChanged", async () => {
+            const search = document.getElementById('searchInput').value;
+            const role = document.getElementById('roleFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            await loadTable(search, role, status);
+        });
+
+        connection.start().catch(() => { /* ignore */ });
+
+        // Search and filter functionality
+        document.getElementById('clearSearch').addEventListener('click', () => {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('roleFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            loadTable();
+        });
+
+        document.getElementById('applyFilters').addEventListener('click', () => {
+            const search = document.getElementById('searchInput').value;
+            const role = document.getElementById('roleFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            loadTable(search, role, status);
+        });
+
+        // Real-time search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const search = e.target.value;
+                const role = document.getElementById('roleFilter').value;
+                const status = document.getElementById('statusFilter').value;
+                loadTable(search, role, status);
+            }
+        });
+
+        // Auto-apply filters on dropdown change
+        document.getElementById('roleFilter').addEventListener('change', () => {
+            const search = document.getElementById('searchInput').value;
+            const role = document.getElementById('roleFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            loadTable(search, role, status);
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', () => {
+            const search = document.getElementById('searchInput').value;
+            const role = document.getElementById('roleFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            loadTable(search, role, status);
+        });
+
+        loadTable();
+    </script>
+}
+
