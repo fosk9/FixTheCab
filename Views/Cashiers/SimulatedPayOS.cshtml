@@ -1,0 +1,164 @@
+@{
+    ViewData["Title"] = "Thanh toán PayOS";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - PMP Racing</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .payment-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 90%;
+            padding: 40px;
+            text-align: center;
+        }
+        .payos-logo {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .amount {
+            font-size: 36px;
+            font-weight: bold;
+            color: #28a745;
+            margin: 20px 0;
+        }
+        .order-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .btn-pay {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .btn-pay:hover {
+            transform: scale(1.05);
+            color: white;
+        }
+        .loading {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-card">
+        <div class="payos-logo">
+            <i class="fas fa-credit-card"></i>
+        </div>
+        <h2 class="mb-3">PayOS Payment</h2>
+        <p class="text-muted">PMP Racing Service Invoice</p>
+        
+        <div class="amount">
+            @(((decimal)ViewBag.Amount).ToString("N0")) VNĐ
+        </div>
+        
+        <div class="order-info">
+            <div class="row">
+                <div class="col-6 text-start text-muted">Mã đơn hàng:</div>
+                <div class="col-6 text-end fw-bold">#@ViewBag.OrderId</div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-6 text-start text-muted">Khách hàng:</div>
+                <div class="col-6 text-end fw-bold">@ViewBag.CustomerName</div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-6 text-start text-muted">Mô tả:</div>
+                <div class="col-6 text-end">@ViewBag.Description</div>
+            </div>
+        </div>
+        
+        <div id="paymentSection">
+            <button id="btnPay" class="btn-pay">
+                <i class="fas fa-lock me-2"></i>Thanh toán ngay
+            </button>
+            <p class="mt-3 text-muted small">
+                <i class="fas fa-shield-alt me-1"></i>
+                Thanh toán an toàn qua PayOS
+            </p>
+        </div>
+        
+        <div id="loadingSection" class="loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Đang xử lý thanh toán...</p>
+        </div>
+        
+        <div id="successSection" class="loading">
+            <div class="text-success mb-3">
+                <i class="fas fa-check-circle fa-4x"></i>
+            </div>
+            <h4 class="text-success">Thanh toán thành công!</h4>
+            <p class="text-muted">Cảm ơn bạn đã sử dụng dịch vụ của PMP Racing</p>
+            <button id="btnClose" class="btn btn-outline-primary mt-3">
+                <i class="fas fa-home me-2"></i>Quay lại trang chủ
+            </button>
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('btnPay').addEventListener('click', async () => {
+            document.getElementById('paymentSection').style.display = 'none';
+            document.getElementById('loadingSection').style.display = 'block';
+            
+            // Simulate payment processing delay
+            await new Promise(r => setTimeout(r, 2000));
+            
+            // Call the confirm payment endpoint
+            try {
+                const formData = new FormData();
+                formData.append('orderId', @ViewBag.OrderId);
+                formData.append('__RequestVerificationToken', '@Html.AntiForgeryToken()');
+                
+                const res = await fetch('@Url.Action("ConfirmPayOSPayment","Cashiers")', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (res.ok) {
+                    document.getElementById('loadingSection').style.display = 'none';
+                    document.getElementById('successSection').style.display = 'block';
+                } else {
+                    alert('Thanh toán thất bại. Vui lòng thử lại.');
+                    document.getElementById('loadingSection').style.display = 'none';
+                    document.getElementById('paymentSection').style.display = 'block';
+                }
+            } catch (err) {
+                alert('Lỗi: ' + err.message);
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('paymentSection').style.display = 'block';
+            }
+        });
+        
+        document.getElementById('btnClose').addEventListener('click', () => {
+            window.opener?.focus();
+            window.close();
+        });
+    </script>
+</body>
+</html>

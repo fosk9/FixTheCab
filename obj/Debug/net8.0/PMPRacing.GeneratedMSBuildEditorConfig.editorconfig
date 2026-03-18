@@ -62,8 +62,56 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5zXFBhcnRpYWxzXF9BY2NvdW50c1RhYmxlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/CreateInvoice.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcQ3JlYXRlSW52b2ljZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/Invoices.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcSW52b2ljZXMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/Partials/_CreatePayment.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcUGFydGlhbHNcX0NyZWF0ZVBheW1lbnQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/Partials/_CreateQuote.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcUGFydGlhbHNcX0NyZWF0ZVF1b3RlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/Partials/_InvoiceDetails.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcUGFydGlhbHNcX0ludm9pY2VEZXRhaWxzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/Partials/_InvoiceTable.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcUGFydGlhbHNcX0ludm9pY2VUYWJsZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/Partials/_PaymentTable.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcUGFydGlhbHNcX1BheW1lbnRUYWJsZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/Partials/_VehicleCreate.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcUGFydGlhbHNcX1ZlaGljbGVDcmVhdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/Partials/_VehicleTable.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcUGFydGlhbHNcX1ZlaGljbGVUYWJsZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/Payments.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcUGF5bWVudHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/SimulatedPayOS.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcU2ltdWxhdGVkUGF5T1MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/VehicleInfo.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcVmVoaWNsZUluZm8uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Home/Index.cshtml]
