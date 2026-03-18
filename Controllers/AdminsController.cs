@@ -32,9 +32,35 @@ public class AdminsController : Controller
     public IActionResult Accounts() => View();
 
     [HttpGet]
-    public async Task<IActionResult> AccountsTable()
+    public async Task<IActionResult> AccountsTable(string search = "", string role = "", string status = "")
     {
-        var rows = await _db.Employees.AsNoTracking()
+        var query = _db.Employees.AsNoTracking();
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            search = search.Trim();
+            query = query.Where(e => 
+                e.Name.Contains(search) ||
+                (e.Email != null && e.Email.Contains(search)) ||
+                (e.Phone != null && e.Phone.Contains(search)));
+        }
+
+        // Apply role filter
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            role = role.Trim().ToLowerInvariant();
+            query = query.Where(e => e.Role != null && e.Role == role);
+        }
+
+        // Apply status filter
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            status = status.Trim().ToLowerInvariant();
+            query = query.Where(e => e.Status != null && e.Status == status);
+        }
+
+        var rows = await query
             .OrderBy(e => e.EmployeeId)
             .Select(e => new AdminAccountRowVm
             {
@@ -119,84 +145,125 @@ public class AdminsController : Controller
     [HttpPost]
     public async Task<IActionResult> SendCreateOtp(string email)
     {
-        email = (email ?? string.Empty).Trim();
-        if (string.IsNullOrWhiteSpace(email)) return BadRequest("Email is required.");
+        try
+        {
+            email = (email ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(email)) 
+                return BadRequest("Email is required.");
 
-        var exists = await _db.Employees.AsNoTracking().AnyAsync(e => e.Email != null && e.Email == email);
-        if (exists) return BadRequest("Email already exists.");
+            if (!IsValidEmail(email))
+                return BadRequest("Invalid email format.");
 
-        var otp = Random.Shared.Next(100000, 999999).ToString();
-        var expires = TimeSpan.FromMinutes(5);
-        _cache.Set(GetCreateOtpKey(email), otp, expires);
+            var exists = await _db.Employees.AsNoTracking().AnyAsync(e => e.Email != null && e.Email == email);
+            if (exists) 
+                return BadRequest("Email already exists.");
 
-        await _emailApi.SendOtpAsync(email, otp, expires, "Create account");
-        return Json(new { ok = true });
+            var otp = Random.Shared.Next(100000, 999999).ToString();
+            var expires = TimeSpan.FromMinutes(5);
+            _cache.Set(GetCreateOtpKey(email), otp, expires);
+
+            await _emailApi.SendOtpAsync(email, otp, expires, "Create account");
+            return Json(new { ok = true });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to send OTP: {ex.Message}");
+        }
     }
 
     [ValidateAntiForgeryToken]
     [HttpPost]
     public IActionResult VerifyCreateOtp(AdminCreateAccountStep1Vm model)
     {
-        if (!ModelState.IsValid) return BadRequest("Invalid data.");
+        try
+        {
+            if (!ModelState.IsValid) return BadRequest("Invalid data.");
 
-        if (!_cache.TryGetValue(GetCreateOtpKey(model.Email.Trim()), out string? otp) || string.IsNullOrWhiteSpace(otp))
-            return BadRequest("OTP expired or not requested.");
+            if (!_cache.TryGetValue(GetCreateOtpKey(model.Email.Trim()), out string? otp) || string.IsNullOrWhiteSpace(otp))
+                return BadRequest("OTP expired or not requested.");
 
-        if (!string.Equals(model.OtpCode.Trim(), otp, StringComparison.Ordinal))
-            return BadRequest("Invalid OTP.");
+            if (!string.Equals(model.OtpCode.Trim(), otp, StringComparison.Ordinal))
+                return BadRequest("Invalid OTP.");
 
-        return Json(new { ok = true });
+            return Json(new { ok = true });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to verify OTP: {ex.Message}");
+        }
     }
 
     [ValidateAntiForgeryToken]
     [HttpPost]
     public async Task<IActionResult> AccountCreate(AdminCreateAccountVm model)
     {
-        if (!ModelState.IsValid) return PartialView("Partials/_AccountCreate", model);
-
-        var email = model.Email.Trim();
-        var exists = await _db.Employees.AsNoTracking().AnyAsync(e => e.Email != null && e.Email == email);
-        if (exists)
-        {
-            ModelState.AddModelError(nameof(model.Email), "Email already exists.");
-            return PartialView("Partials/_AccountCreate", model);
-        }
-
-        // Require OTP previously verified (still present in cache)
-        if (!_cache.TryGetValue(GetCreateOtpKey(email), out string? otp) || string.IsNullOrWhiteSpace(otp))
-        {
-            ModelState.AddModelError(nameof(model.Email), "OTP expired. Please request OTP again.");
-            return PartialView("Partials/_AccountCreate", model);
-        }
-
-        var employee = new Employee
-        {
-            Name = model.Name.Trim(),
-            Email = email,
-            Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim(),
-            Role = model.Role.Trim().ToLowerInvariant(),
-            Status = model.Status.Trim().ToLowerInvariant(),
-            Password = BCrypt.Net.BCrypt.HashPassword(model.Password),
-            CreatedAt = DateTime.Now
-        };
-
-        _db.Employees.Add(employee);
-        await _db.SaveChangesAsync();
-        _cache.Remove(GetCreateOtpKey(email));
-
         try
         {
-            await _emailApi.SendWelcomeAsync(email, employee.Name, model.Password);
-        }
-        catch
-        {
-            // best-effort: do not block account creation if email fails
-        }
+            if (!ModelState.IsValid) 
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return BadRequest(string.Join("; ", errors));
+            }
 
-        await _hub.Clients.All.SendAsync("accountsChanged");
-        return Json(new { ok = true });
+            var email = model.Email.Trim();
+            var exists = await _db.Employees.AsNoTracking().AnyAsync(e => e.Email != null && e.Email == email);
+            if (exists)
+            {
+                return BadRequest("Email already exists.");
+            }
+
+            // Require OTP previously verified (still present in cache)
+            if (!_cache.TryGetValue(GetCreateOtpKey(email), out string? otp) || string.IsNullOrWhiteSpace(otp))
+            {
+                return BadRequest("OTP expired. Please request OTP again.");
+            }
+
+            var employee = new Employee
+            {
+                Name = model.Name.Trim(),
+                Email = email,
+                Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim(),
+                Role = model.Role.Trim().ToLowerInvariant(),
+                Status = model.Status.Trim().ToLowerInvariant(),
+                Password = BCrypt.Net.BCrypt.HashPassword(model.Password),
+                CreatedAt = DateTime.Now
+            };
+
+            _db.Employees.Add(employee);
+            await _db.SaveChangesAsync();
+            _cache.Remove(GetCreateOtpKey(email));
+
+            try
+            {
+                await _emailApi.SendWelcomeAsync(email, employee.Name, model.Password);
+            }
+            catch
+            {
+                // best-effort: do not block account creation if email fails
+            }
+
+            await _hub.Clients.All.SendAsync("accountsChanged");
+            return Json(new { ok = true });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to create account: {ex.Message}");
+        }
     }
 
     private static string GetCreateOtpKey(string email) => $"otp:create_account:{email.ToLowerInvariant()}";
+
+    private static bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }
 

@@ -10,6 +10,42 @@
     <button class="btn btn-primary" type="button" id="btnCreateAccount">Create account</button>
 </div>
 
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Search</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search by name, email, phone...">
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearch">Clear</button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Role Filter</label>
+                <select class="form-select" id="roleFilter">
+                    <option value="">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="manager">Manager</option>
+                    <option value="cashier">Cashier</option>
+                    <option value="mechanic">Mechanic</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status Filter</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="locked">Locked</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-primary w-100" type="button" id="applyFilters">Apply Filters</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card shadow-sm">
     <div class="card-body p-0">
         <div id="accountsTableWrap" class="p-3">
@@ -38,9 +74,10 @@
         const overlayEl = document.getElementById('adminOverlay');
         const overlay = new bootstrap.Modal(overlayEl);
 
-        async function loadTable() {
+        async function loadTable(search = "", role = "", status = "") {
             const wrap = document.getElementById('accountsTableWrap');
-            const res = await fetch('@Url.Action("AccountsTable","Admins")', { headers: { 'X-Requested-With': 'fetch' } });
+            const params = new URLSearchParams({ search, role, status });
+            const res = await fetch('@Url.Action("AccountsTable","Admins")' + '?' + params.toString(), { headers: { 'X-Requested-With': 'fetch' } });
             wrap.innerHTML = await res.text();
         }
 
@@ -110,7 +147,24 @@
             if (action === 'create') {
                 // Always take the email from the visible input to avoid stale hidden values
                 const email = document.getElementById('createEmail')?.value;
+                if (!email) {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">Email is required.</div>';
+                    return;
+                }
                 if (email) data.set('Email', email);
+
+                // Validate required fields before sending
+                const name = data.get('Name');
+                const password = data.get('Password');
+                
+                if (!name || !name.trim()) {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">Name is required.</div>';
+                    return;
+                }
+                if (!password || password.length < 6) {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">Password must be at least 6 characters.</div>';
+                    return;
+                }
 
                 const res = await fetch(form.action, { method: 'POST', body: data });
                 const ct = res.headers.get('content-type') || '';
@@ -126,6 +180,8 @@
                         body.querySelectorAll('input,select,button').forEach(el => {
                             if (el.closest('form') && el.closest('form').getAttribute('data-admin-form') === 'create') el.disabled = true;
                         });
+                    } else {
+                        document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">Failed to create account. Please try again.</div>';
                     }
                 } else {
                     document.getElementById('adminOverlayBody').innerHTML = await res.text();
@@ -135,13 +191,18 @@
             if (action === 'sendOtp') {
                 const token = data.get('__RequestVerificationToken');
                 const email = document.getElementById('createEmail')?.value || data.get('Email');
+                if (!email) {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">Email is required.</div>';
+                    return;
+                }
                 const res = await fetch('@Url.Action("SendCreateOtp","Admins")', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formUrlEncoded({ __RequestVerificationToken: token, email })
                 });
                 if (!res.ok) {
-                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">' + (await res.text()) + '</div>';
+                    const errorText = await res.text();
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">' + errorText + '</div>';
                 } else {
                     document.getElementById('otpMsg').innerHTML = '<div class="alert alert-success mb-0">OTP sent. Check inbox/spam.</div>';
                     document.getElementById('createOtp').disabled = false;
@@ -151,14 +212,25 @@
             if (action === 'verifyOtp') {
                 const token = data.get('__RequestVerificationToken');
                 const Email = document.getElementById('createEmail')?.value || data.get('Email');
-                const OtpCode = data.get('OtpCode');
+                const OtpCode = document.getElementById('createOtp')?.value || data.get('OtpCode');
+                
+                if (!Email) {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">Email is required.</div>';
+                    return;
+                }
+                if (!OtpCode) {
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">OTP code is required.</div>';
+                    return;
+                }
+                
                 const res = await fetch('@Url.Action("VerifyCreateOtp","Admins")', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formUrlEncoded({ __RequestVerificationToken: token, Email, OtpCode })
                 });
                 if (!res.ok) {
-                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">' + (await res.text()) + '</div>';
+                    const errorText = await res.text();
+                    document.getElementById('otpMsg').innerHTML = '<div class="alert alert-danger mb-0">' + errorText + '</div>';
                 } else {
                     document.getElementById('otpMsg').innerHTML = '<div class="alert alert-success mb-0">OTP verified. You can fill account details now.</div>';
                     document.getElementById('createDetails').classList.remove('d-none');
@@ -173,10 +245,53 @@
             .build();
 
         connection.on("accountsChanged", async () => {
-            await loadTable();
+            const search = document.getElementById('searchInput').value;
+            const role = document.getElementById('roleFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            await loadTable(search, role, status);
         });
 
         connection.start().catch(() => { /* ignore */ });
+
+        // Search and filter functionality
+        document.getElementById('clearSearch').addEventListener('click', () => {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('roleFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            loadTable();
+        });
+
+        document.getElementById('applyFilters').addEventListener('click', () => {
+            const search = document.getElementById('searchInput').value;
+            const role = document.getElementById('roleFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            loadTable(search, role, status);
+        });
+
+        // Real-time search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const search = e.target.value;
+                const role = document.getElementById('roleFilter').value;
+                const status = document.getElementById('statusFilter').value;
+                loadTable(search, role, status);
+            }
+        });
+
+        // Auto-apply filters on dropdown change
+        document.getElementById('roleFilter').addEventListener('change', () => {
+            const search = document.getElementById('searchInput').value;
+            const role = document.getElementById('roleFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            loadTable(search, role, status);
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', () => {
+            const search = document.getElementById('searchInput').value;
+            const role = document.getElementById('roleFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            loadTable(search, role, status);
+        });
 
         loadTable();
     </script>
