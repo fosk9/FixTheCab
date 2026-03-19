@@ -1,0 +1,51 @@
+@model VehicleInfoVm
+
+<form asp-action="VehicleCreate" method="post" data-vehicle-form="create">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Biển số xe <span class="text-danger">*</span></label>
+            <input asp-for="LicensePlate" class="form-control" required />
+            <span asp-validation-for="LicensePlate" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Model xe <span class="text-danger">*</span></label>
+            <input asp-for="BikeModel" class="form-control" required />
+            <span asp-validation-for="BikeModel" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Tên khách hàng</label>
+            <input asp-for="CustomerName" class="form-control" />
+            <span asp-validation-for="CustomerName" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Email khách hàng</label>
+            <input asp-for="CustomerEmail" class="form-control" type="email" />
+            <span asp-validation-for="CustomerEmail" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Điện thoại khách hàng</label>
+            <input asp-for="CustomerPhone" class="form-control" />
+            <span asp-validation-for="CustomerPhone" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Ghi chú</label>
+            <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Ghi chú về xe hoặc khách hàng..."></textarea>
+            <span asp-validation-for="Notes" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Lưu thông tin
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

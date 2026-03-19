@@ -1,0 +1,72 @@
+@model IEnumerable<PaymentListVm>
+
+@if (!Model.Any())
+{
+    <div class="text-center text-muted py-4">
+        <i class="fas fa-money-bill-wave fa-3x mb-3"></i>
+        <div>Không tìm thấy thanh toán nào.</div>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã thanh toán</th>
+                    <th>Biển số xe</th>
+                    <th>Khách hàng</th>
+                    <th>Số tiền</th>
+                    <th>Phương thức</th>
+                    <th>Ngày thanh toán</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var payment in Model)
+                {
+                    <tr>
+                        <td><strong>#@payment.PaymentId</strong></td>
+                        <td>
+                            <span class="badge bg-secondary">@payment.LicensePlate</span>
+                        </td>
+                        <td>@payment.CustomerName</td>
+                        <td><strong>@payment.Amount?.ToString("N0") VNĐ</strong></td>
+                        <td>
+                            @{
+                                var methodText = payment.PaymentMethod switch
+                                {
+                                    "cash" => "Tiền mặt",
+                                    "card" => "Thẻ",
+                                    "transfer" => "Chuyển khoản",
+                                    _ => payment.PaymentMethod
+                                };
+                            }
+                            @methodText
+                        </td>
+                        <td>@payment.PaymentDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            @{
+                                var statusClass = payment.Status switch
+                                {
+                                    "completed" => "bg-success",
+                                    "pending" => "bg-warning",
+                                    "refunded" => "bg-danger",
+                                    _ => "bg-secondary"
+                                };
+                                var statusText = payment.Status switch
+                                {
+                                    "completed" => "Đã thanh toán",
+                                    "pending" => "Chờ thanh toán",
+                                    "refunded" => "Đã hoàn tiền",
+                                    _ => payment.Status
+                                };
+                            }
+                            <span class="badge @statusClass">@statusText</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
