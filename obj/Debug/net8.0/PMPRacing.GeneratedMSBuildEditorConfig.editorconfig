@@ -106,8 +106,12 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcUGF5bWVudHMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/SimulatedPayOS.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcU2ltdWxhdGVkUGF5T1MuY3NodG1s
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/PaymentSuccess.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcUGF5bWVudFN1Y2Nlc3MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/SimulatedPayment.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaGllcnNcU2ltdWxhdGVkUGF5bWVudC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [G:/PRN222/FinalProject/PMPRacing/PMPRacing/Views/Cashiers/VehicleInfo.cshtml]

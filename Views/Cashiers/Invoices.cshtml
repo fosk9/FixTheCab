@@ -64,12 +64,14 @@
     <script>
         const invoiceOverlayEl = document.getElementById('invoiceOverlay');
         const invoiceOverlay = new bootstrap.Modal(invoiceOverlayEl);
+        let currentPage = 1;
 
-        async function loadInvoiceTable(search = "", status = "") {
+        async function loadInvoiceTable(search = "", status = "", page = 1) {
             const wrap = document.getElementById('invoiceTableWrap');
-            const params = new URLSearchParams({ search, status });
+            const params = new URLSearchParams({ search, status, page });
             const res = await fetch('@Url.Action("InvoiceTable","Cashiers")' + '?' + params.toString(), { headers: { 'X-Requested-With': 'fetch' } });
             wrap.innerHTML = await res.text();
+            currentPage = page;
         }
 
         async function openInvoiceOverlay(title, url) {
@@ -88,13 +90,13 @@
         document.getElementById('clearInvoiceSearch').addEventListener('click', () => {
             document.getElementById('invoiceSearchInput').value = '';
             document.getElementById('invoiceStatusFilter').value = '';
-            loadInvoiceTable();
+            loadInvoiceTable('', '', 1);
         });
 
         document.getElementById('applyInvoiceFilters').addEventListener('click', () => {
             const search = document.getElementById('invoiceSearchInput').value;
             const status = document.getElementById('invoiceStatusFilter').value;
-            loadInvoiceTable(search, status);
+            loadInvoiceTable(search, status, 1);
         });
 
         // Real-time search on Enter key
@@ -102,7 +104,7 @@
             if (e.key === 'Enter') {
                 const search = e.target.value;
                 const status = document.getElementById('invoiceStatusFilter').value;
-                loadInvoiceTable(search, status);
+                loadInvoiceTable(search, status, 1);
             }
         });
 
@@ -110,11 +112,21 @@
         document.getElementById('invoiceStatusFilter').addEventListener('change', () => {
             const search = document.getElementById('invoiceSearchInput').value;
             const status = document.getElementById('invoiceStatusFilter').value;
-            loadInvoiceTable(search, status);
+            loadInvoiceTable(search, status, 1);
         });
 
         // Handle action buttons
         document.addEventListener('click', async (e) => {
+            // Handle pagination
+            const pageBtn = e.target.closest('[data-page]');
+            if (pageBtn) {
+                const page = parseInt(pageBtn.getAttribute('data-page'));
+                const search = document.getElementById('invoiceSearchInput').value;
+                const status = document.getElementById('invoiceStatusFilter').value;
+                loadInvoiceTable(search, status, page);
+                return;
+            }
+
             const btn = e.target.closest('[data-invoice-action]');
             if (!btn) return;
             const action = btn.getAttribute('data-invoice-action');
@@ -123,8 +135,10 @@
             if (action === 'details') {
                 await openInvoiceOverlay('Chi tiết hóa đơn', '@Url.Action("InvoiceDetails","Cashiers")' + '?id=' + id);
             }
-            if (action === 'quote') {
-                await openInvoiceOverlay('Tạo báo giá', '@Url.Action("CreateQuote","Cashiers")' + '?id=' + id);
+            if (action === 'payment') {
+                // Redirect to simulated payment page
+                const amount = btn.getAttribute('data-amount') || 0;
+                window.location.href = '@Url.Action("SimulatedPayment","Cashiers")' + '?orderId=' + id + '&amount=' + amount;
             }
         });
 

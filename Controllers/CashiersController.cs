@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using PMPRacing.Models;
 using PMPRacing.ViewModels;
+using PMPRacing.Services.Email;
 
 namespace PMPRacing.Controllers;
 
@@ -12,11 +13,13 @@ public class CashiersController : Controller
 {
     private readonly PmpRacingContext _db;
     private readonly IMemoryCache _cache;
+    private readonly EmailApi _emailApi;
 
-    public CashiersController(PmpRacingContext db, IMemoryCache cache)
+    public CashiersController(PmpRacingContext db, IMemoryCache cache, EmailApi emailApi)
     {
         _db = db;
         _cache = cache;
+        _emailApi = emailApi;
     }
 
     public IActionResult Index() => View();
@@ -27,8 +30,10 @@ public class CashiersController : Controller
     public IActionResult Invoices() => View();
 
     [HttpGet]
-    public async Task<IActionResult> InvoiceTable(string search = "", string status = "")
+    public async Task<IActionResult> InvoiceTable(string search = "", string status = "", int page = 1)
     {
+        const int pageSize = 10;
+        
         var query = _db.ServiceOrders
             .Include(o => o.Receipt)
             .ThenInclude(r => r!.Bike)
@@ -52,8 +57,13 @@ public class CashiersController : Controller
             query = query.Where(o => o.Status != null && o.Status == status);
         }
 
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        
         var invoices = await query
             .OrderByDescending(o => o.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(o => new InvoiceListVm
             {
                 OrderId = o.OrderId,
@@ -66,6 +76,10 @@ public class CashiersController : Controller
                 CompletedAt = o.CompletedAt
             })
             .ToListAsync();
+
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalCount = totalCount;
 
         return PartialView("Partials/_InvoiceTable", invoices);
     }
@@ -464,19 +478,26 @@ public class CashiersController : Controller
         if (string.IsNullOrWhiteSpace(email)) 
             return BadRequest("Email is required.");
 
-        //if (!IsVaidEmail(email))
-        //    return BadRequest("Invalid email format.");
+        if (!IsValidEmail(email))
+            return BadRequest("Invalid email format.");
 
-        var otp = Random.Shared.Next(100000, 999999).ToString();
-        var expires = TimeSpan.FromMinutes(5);
-        
-        // Store OTP in cache
-        _cache.Set($"otp:invoice:{email.ToLowerInvariant()}", otp, expires);
+        try
+        {
+            var otp = Random.Shared.Next(100000, 999999).ToString();
+            var expires = TimeSpan.FromMinutes(5);
+            
+            // Store OTP in cache
+            _cache.Set($"otp:invoice:{email.ToLowerInvariant()}", otp, expires);
 
-        // Send OTP email (placeholder - implement actual email sending)
-        // await _emailApi.SendOtpAsync(email, otp, expires, "Invoice Verification");
-        
-        return Json(new { ok = true, message = "OTP sent successfully" });
+            // Send OTP email
+            await _emailApi.SendOtpAsync(email, otp, expires, "Xác thực tạo hóa đơn");
+            
+            return Json(new { ok = true, message = "OTP đã được gửi đến email của bạn" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Không thể gửi OTP: {ex.Message}");
+        }
     }
 
     [HttpPost]
@@ -618,20 +639,12 @@ public class CashiersController : Controller
             if (order == null)
                 return BadRequest("Order not found.");
 
-            // TODO: Implement actual PayOS integration here
-            // This is a placeholder that simulates PayOS payment creation
-            
-            // In real implementation, you would:
-            // 1. Call PayOS API to create payment link
-            // 2. Store the payment link and order code
-            // 3. Return the payment URL to the client
-
-            // Simulated payment URL for now
-            var paymentUrl = $"/Cashiers/SimulatedPayOS?orderId={model.OrderId}&amount={model.Amount}";
-
             // Update order status
             order.Status = "awaiting_payment";
             await _db.SaveChangesAsync();
+
+            // Return simulated payment URL
+            var paymentUrl = $"/Cashiers/SimulatedPayment?orderId={model.OrderId}&amount={model.Amount}";
 
             return Json(new PayOSPaymentResponseVm
             {
@@ -648,9 +661,26 @@ public class CashiersController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> SimulatedPayOS(int orderId, decimal amount)
+    public IActionResult PaymentSuccess(int orderId)
     {
-        // This is a simulated PayOS payment page for demonstration
+        ViewBag.Success = true;
+        ViewBag.Message = "Thanh toán thành công!";
+        ViewBag.OrderId = orderId;
+        return View();
+    }
+
+    [HttpGet]
+    public IActionResult PaymentFailed(int orderId)
+    {
+        ViewBag.Success = false;
+        ViewBag.Message = "Thanh toán thất bại. Vui lòng thử lại.";
+        ViewBag.OrderId = orderId;
+        return View("PaymentSuccess");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> SimulatedPayment(int orderId, decimal amount)
+    {
         var order = await _db.ServiceOrders
             .Include(o => o.Receipt)
             .ThenInclude(r => r!.Bike)
@@ -661,41 +691,69 @@ public class CashiersController : Controller
 
         ViewBag.OrderId = orderId;
         ViewBag.Amount = amount;
-        ViewBag.CustomerName = order.Receipt?.Bike?.Customer?.Name ?? "Customer";
-        ViewBag.Description = $"Payment for order #{orderId}";
+        ViewBag.CustomerName = order.Receipt?.Bike?.Customer?.Name ?? "Khách hàng";
+        ViewBag.Description = $"Thanh toán hóa đơn #{orderId}";
 
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ConfirmPayOSPayment(int orderId)
+    public async Task<IActionResult> ConfirmPaymentSuccess(int orderId)
     {
         try
         {
             var order = await _db.ServiceOrders.FindAsync(orderId);
             if (order == null) return NotFound();
 
-            // Create payment record
-            var payment = new Payment
+            // Check if payment already exists
+            var existingPayment = await _db.Payments
+                .FirstOrDefaultAsync(p => p.OrderId == orderId);
+            
+            if (existingPayment == null)
             {
-                OrderId = orderId,
-                Amount = order.TotalPrice,
-                Method = "payos",
-                Status = "completed",
-                PaidAt = DateTime.Now
-            };
-            _db.Payments.Add(payment);
+                // Create payment record
+                var payment = new Payment
+                {
+                    OrderId = orderId,
+                    Amount = order.TotalPrice,
+                    Method = "simulated",
+                    Status = "completed",
+                    PaidAt = DateTime.Now
+                };
+                _db.Payments.Add(payment);
 
-            // Update order status
-            order.Status = "paid";
-            await _db.SaveChangesAsync();
+                // Update order status
+                order.Status = "paid";
+                await _db.SaveChangesAsync();
+            }
 
-            return Json(new { ok = true, message = "Payment confirmed successfully" });
+            return RedirectToAction("PaymentSuccess", new { orderId });
         }
         catch (Exception ex)
         {
             return BadRequest($"Failed to confirm payment: {ex.Message}");
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmPaymentFailed(int orderId)
+    {
+        try
+        {
+            var order = await _db.ServiceOrders.FindAsync(orderId);
+            if (order == null) return NotFound();
+
+            // Update order status to failed
+            order.Status = "payment_failed";
+            await _db.SaveChangesAsync();
+
+            return RedirectToAction("PaymentFailed", new { orderId });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to process payment failure: {ex.Message}");
         }
     }
 
@@ -704,6 +762,19 @@ public class CashiersController : Controller
         // TODO: Implement actual logic to get current employee ID from claims
         // For now, return null or a default value
         return null;
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     #endregion
