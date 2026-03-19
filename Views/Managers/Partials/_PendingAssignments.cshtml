@@ -1,0 +1,48 @@
+@model IEnumerable<PMPRacing.Models.PendingAssignmentQueue>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-success m-3 mb-0 border-0 shadow-sm text-center py-4">
+        <i class="bi bi-check2-circle text-success fs-2 d-block mb-2"></i>
+        Tuyệt vời! Hiện tại không có xe nào đang đợi phân công.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Mã</th>
+                    <th>Thông Tin Khách</th>
+                    <th>Thông Tin Xe</th>
+                    <th>T.Gian Nhận</th>
+                    <th class="text-end pe-3">#</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="ps-3 fw-bold text-primary">@item.ReceiptId</td>
+                        <td>
+                            <div class="fw-bold">@item.CustomerName</div>
+                            <small class="text-muted">@item.CustomerPhone</small>
+                        </td>
+                        <td>
+                            <div class="fw-bold">@item.LicensePlate</div>
+                            <small class="text-muted">@item.BikeModel</small>
+                        </td>
+                        <td>@item.ReceivedAt?.ToString("HH:mm dd/MM/yyyy")</td>
+                        <td class="text-end pe-3">
+                            <button class="btn btn-sm btn-primary rounded-pill px-3" 
+                                    onclick="openAssignModal(@item.ReceiptId, '@Html.Raw(item.CustomerName)', '@Html.Raw(item.CustomerPhone)', '@Html.Raw(item.LicensePlate + " - " + item.BikeModel)')">
+                                Giao Thợ
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

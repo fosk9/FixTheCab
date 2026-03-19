@@ -1,0 +1,41 @@
+@model IEnumerable<PMPRacing.ViewModels.PartListRowVm>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info border-0 shadow-sm"><i class="bi bi-info-circle me-2"></i>Không tìm thấy dữ liệu phụ tùng.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã</th>
+                    <th>Tên Phụ Tùng</th>
+                    <th class="text-end">Đơn Giá</th>
+                    <th class="text-center">Tồn Kho</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var isWarning = item.Stock <= item.WarningLevel;
+                    <tr class="@(isWarning ? "table-warning" : "")">
+                        <td>@item.PartId</td>
+                        <td class="fw-bold">@item.PartName</td>
+                        <td class="text-end">@(item.Price.ToString("N0")) đ</td>
+                        <td class="text-center fw-bold @(item.Stock == 0 ? "text-danger" : isWarning ? "text-warning" : "text-success")">
+                            @item.Stock / @item.WarningLevel
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary" onclick="showEditPartModal(@item.PartId)">
+                                <i class="bi bi-pencil-square"></i> Cập nhật
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

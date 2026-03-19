@@ -1,0 +1,48 @@
+@model PMPRacing.ViewModels.PartEditVm
+
+<div class="modal fade" id="partModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-0 bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Cập Nhật Phụ Tùng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="PartEdit" method="post">
+                <input type="hidden" asp-for="PartId" />
+                <div class="modal-body p-4">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label asp-for="PartName" class="form-label fw-bold">Tên Phụ Tùng *</label>
+                        <input asp-for="PartName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="PartName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Price" class="form-label fw-bold">Đơn Giá (đ) *</label>
+                        <input asp-for="Price" type="number" step="1000" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Price" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label asp-for="Stock" class="form-label fw-bold">SL Tồn Kho *</label>
+                            <input asp-for="Stock" type="number" class="form-control" />
+                            <span asp-validation-for="Stock" class="text-danger small"></span>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label asp-for="WarningLevel" class="form-label fw-bold">Mức Cảnh Báo *</label>
+                            <input asp-for="WarningLevel" type="number" class="form-control" />
+                            <span asp-validation-for="WarningLevel" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

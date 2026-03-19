@@ -1,0 +1,27 @@
+<ul class="nav nav-pills mb-4 mt-3">
+    <li class="nav-item">
+        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")" href="/Managers/Index">
+            <i class="bi bi-speedometer2 me-1"></i> Báo Cáo
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Parts" ? "active" : "")" href="/Managers/Parts">
+            <i class="bi bi-box-seam me-1"></i> Kho Phụ Tùng
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Schedules" ? "active" : "")" href="/Managers/Schedules">
+            <i class="bi bi-calendar-week me-1"></i> Lịch Làm Việc
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Assignments" ? "active" : "")" href="/Managers/Assignments">
+            <i class="bi bi-person-workspace me-1"></i> Phân Công
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "LeaveRequests" ? "active" : "")" href="/Managers/LeaveRequests">
+            <i class="bi bi-calendar-x me-1"></i> Nghỉ Phép
+        </a>
+    </li>
+</ul>
