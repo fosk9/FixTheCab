@@ -136,10 +136,26 @@ public class ManagersController : Controller
     [HttpGet]
     public async Task<IActionResult> WorkloadTable()
     {
-        var rows = await _db.Set<MechanicWorkload>()
-                            .OrderByDescending(x => x.ActiveJobCount)
+        var activeStatuses = new[] { "assigned", "in_progress", "processing" };
+        
+        var mechanics = await _db.Employees
+                            .Where(e => e.Role == "mechanic" && e.Status == "active")
                             .AsNoTracking()
                             .ToListAsync();
+
+        var activeJobs = await _db.MechanicAssignments
+                            .Include(ma => ma.Receipt)
+                            .Where(ma => ma.Receipt != null && activeStatuses.Contains(ma.Receipt.Status))
+                            .GroupBy(ma => ma.MechanicId)
+                            .Select(g => new { MechanicId = g.Key, Count = g.Count() })
+                            .ToListAsync();
+
+        var rows = mechanics.Select(m => new MechanicWorkload {
+            EmployeeId = m.EmployeeId,
+            MechanicName = m.Name,
+            ActiveJobCount = activeJobs.FirstOrDefault(j => j.MechanicId == m.EmployeeId)?.Count ?? 0
+        }).OrderByDescending(x => x.ActiveJobCount).ToList();
+
         return PartialView("Partials/_MechanicWorkload", rows);
     }
 
