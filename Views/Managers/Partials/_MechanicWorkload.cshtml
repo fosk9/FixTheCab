@@ -1,0 +1,48 @@
+@model IEnumerable<PMPRacing.Models.MechanicWorkload>
+
+@if (!Model.Any())
+{
+    <div class="p-3 text-muted text-center">Không có thợ cơ khí nào đang rảnh hoạt động.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Tên Thợ</th>
+                    <th class="text-end pe-3">Việc Đang Nhận</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr data-mechanic-id="@item.EmployeeId">
+                        <td class="ps-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                                <span class="fw-bold">@item.MechanicName</span>
+                            </div>
+                        </td>
+                        <td class="text-end pe-3">
+                            @if (item.ActiveJobCount > 2)
+                            {
+                                <span class="badge bg-danger rounded-pill px-3 py-2 fs-6">@item.ActiveJobCount xe</span>
+                            }
+                            else if (item.ActiveJobCount > 0)
+                            {
+                                <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fs-6">@item.ActiveJobCount xe</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success rounded-pill px-3 py-2 fs-6">Đang rảnh</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

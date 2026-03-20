@@ -1,0 +1,77 @@
+@{
+    ViewData["Title"] = "Duyệt Đơn Nghỉ Phép";
+}
+
+@await Html.PartialAsync("Partials/_ManagerNav")
+@Html.AntiForgeryToken()
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-calendar-x me-2"></i>Duyệt Nghỉ Phép</h2>
+</div>
+
+<div class="card shadow-sm border-0 mb-4 bg-light">
+    <div class="card-body p-0">
+        <ul class="nav nav-tabs px-3 pt-3 border-bottom-0 bg-white" id="leaveTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-status="pending" type="button" role="tab">Chờ Duyệt</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-status="approved" type="button" role="tab">Đã Duyệt</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-status="rejected" type="button" role="tab">Từ Chối</button>
+            </li>
+        </ul>
+
+        <div id="tableContainer" class="position-relative bg-white" style="min-height:200px">
+            <div class="d-flex justify-content-center p-5">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentStatus = 'pending';
+
+        $(function () {
+            loadTable();
+
+            $('#leaveTabs button[data-bs-toggle!="tab"]').on('click', function (e) {
+                e.preventDefault();
+                $('#leaveTabs button').removeClass('active');
+                $(this).addClass('active');
+
+                currentStatus = $(this).data('status');
+                loadTable();
+            });
+        });
+
+        function loadTable() {
+            $('#tableContainer').html('<div class="d-flex justify-content-center p-5"><div class="spinner-border text-primary" role="status"></div></div>');
+            
+            $.get('/Managers/LeaveRequestsTable?status=' + currentStatus)
+                .done(function (html) {
+                    $('#tableContainer').html(html);
+                });
+        }
+
+        function actOnRequest(id, action) {
+            const actionText = action === 'approve' ? 'DUYỆT' : 'TỪ CHỐI';
+            if (!confirm('Xác nhận ' + actionText + ' đơn nghỉ phép này?')) return;
+
+            $.post('/Managers/ActOnLeaveRequest', { id: id, action: action, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() })
+                .done(function(res) {
+                    if (res.ok) {
+                        loadTable();
+                    } else {
+                        alert(res.error || "Có lỗi xảy ra");
+                    }
+                })
+                .fail(function(xhr) {
+                    alert(xhr.responseText || 'Lỗi hệ thống');
+                });
+        }
+    </script>
+}
