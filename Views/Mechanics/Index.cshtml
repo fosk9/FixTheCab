@@ -1,9 +1,180 @@
+@model PMPRacing.ViewModels.MechanicDashboardVm
 @{
-    ViewData["Title"] = "Mechanic home";
+    ViewData["Title"] = "Thợ máy - Dashboard";
 }
 
-<div class="p-4 bg-light border rounded">
-    <h1 class="h4 mb-1">Mechanic home</h1>
-    <p class="text-muted mb-0">Welcome, @User.Identity?.Name.</p>
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold text-primary"><i class="bi bi-tools me-2"></i> Bảng Điều Khiển Thợ Máy</h2>
+            <p class="text-muted">Chào mừng trở lại! Xem danh sách công việc và lịch làm việc của bạn bên dưới.</p>
+        </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <ul class="nav nav-pills mb-4 bg-white p-2 rounded shadow-sm" id="mechanicTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold" id="incoming-tab" data-bs-toggle="pill" data-bs-target="#incoming" type="button" role="tab">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Xe Mới Giao 
+                <span class="badge bg-danger ms-1">@Model.IncomingJobs.Count</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold" id="processing-tab" data-bs-toggle="pill" data-bs-target="#processing" type="button" role="tab">
+                <i class="bi bi-gear-wide-connected me-1"></i> Đang Sửa
+                <span class="badge bg-warning text-dark ms-1">@Model.ProcessingJobs.Count</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold" id="schedule-tab" data-bs-toggle="pill" data-bs-target="#schedule" type="button" role="tab">
+                <i class="bi bi-calendar3 me-1"></i> Lịch Làm Việc
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link fw-semibold" asp-action="LeaveRequests">
+                <i class="bi bi-calendar-minus me-1"></i> Nghỉ Phép
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="mechanicTabsContent">
+        <!-- Incoming Jobs Tab -->
+        <div class="tab-pane fade show active" id="incoming" role="tabpanel">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Biển Số / Xe</th>
+                                    <th>Khách Hàng</th>
+                                    <th>Thời Gian Giao</th>
+                                    <th>Ghi Chú Quản Lý</th>
+                                    <th class="text-end pe-4">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.IncomingJobs.Any())
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5 text-muted">
+                                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                            Hiện chưa có xe nào được bàn giao cho bạn.
+                                        </td>
+                                    </tr>
+                                }
+                                @foreach (var item in Model.IncomingJobs)
+                                {
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="fw-bold text-dark">@item.LicensePlate</div>
+                                            <small class="text-muted">@item.BikeModel</small>
+                                        </td>
+                                        <td>@item.CustomerName</td>
+                                        <td>@item.ReceivedAt.ToString("HH:mm dd/MM")</td>
+                                        <td><span class="text-truncate d-inline-block" style="max-width: 200px;">@item.Note</span></td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-primary btn-sm rounded-pill px-3 start-job-btn" data-id="@item.ReceiptId">
+                                                <i class="bi bi-play-fill me-1"></i> Bắt đầu làm
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Jobs Tab -->
+        <div class="tab-pane fade" id="processing" role="tabpanel">
+            <div class="row g-3">
+                @if (!Model.ProcessingJobs.Any())
+                {
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm py-5 text-center text-muted">
+                            <i class="bi bi-tools fs-1 mb-2"></i>
+                            Bạn không có xe nào đang trong quá trình xử lý.
+                        </div>
+                    </div>
+                }
+                @foreach (var item in Model.ProcessingJobs)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm hover-lift border-start border-4 border-warning">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-warning text-dark">Đang xử lý</span>
+                                    <small class="text-muted">Mã đơn: #@item.OrderId</small>
+                                </div>
+                                <h5 class="card-title fw-bold mb-1">@item.LicensePlate</h5>
+                                <p class="card-text text-muted mb-3">@item.CustomerName</p>
+                                <div class="d-flex justify-content-between align-items-center mt-auto">
+                                    <div class="fw-bold text-primary">@item.TotalPrice.ToString("N0") đ</div>
+                                    <a asp-action="JobDetail" asp-route-id="@item.OrderId" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                        Tiếp tục sửa <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Schedule Tab -->
+        <div class="tab-pane fade" id="schedule" role="tabpanel">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">Lịch làm việc của tôi</h5>
+                    <div class="row g-2">
+                        @foreach (var day in Model.MySchedule)
+                        {
+                            <div class="col-md-3">
+                                <div class="p-3 rounded border @(day.WorkDate == DateOnly.FromDateTime(DateTime.Today) ? "bg-primary-subtle border-primary" : "bg-light")">
+                                    <div class="fw-bold">@(day.WorkDate?.ToString("dd/MM (dddd)") ?? "...")</div>
+                                    <div class="text-capitalize">Ca: @day.Shift</div>
+                                    <div class="small text-muted">@day.CheckIn?.ToString(@"hh\:mm") - @(day.CheckOut?.ToString(@"hh\:mm") ?? "...")</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
+@section Scripts {
+    <script>
+        $(function() {
+            $('.start-job-btn').click(function() {
+                const receiptId = $(this).data('id');
+                const btn = $(this);
+                
+                if (confirm('Bạn muốn bắt đầu tiếp nhận và sửa chữa xe này?')) {
+                    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Đang xử lý...');
+                    
+                    $.post('/Mechanics/StartJob', { receiptId: receiptId }, function(res) {
+                        if (res.ok) {
+                            window.location.href = '/Mechanics/JobDetail/' + res.orderId;
+                        } else {
+                            alert('Lỗi: ' + (res.message || 'Không thể bắt đầu công việc.'));
+                            btn.prop('disabled', false).html('<i class="bi bi-play-fill me-1"></i> Bắt đầu làm');
+                        }
+                    }).fail(function() {
+                        alert('Lỗi kết nối máy chủ.');
+                        btn.prop('disabled', false).html('<i class="bi bi-play-fill me-1"></i> Bắt đầu làm');
+                    });
+                }
+            });
+        });
+    </script>
+}
+
+<style>
+    .hover-lift { transition: transform 0.2s; }
+    .hover-lift:hover { transform: translateY(-5px); }
+    .nav-pills .nav-link.active { box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2); }
+</style>

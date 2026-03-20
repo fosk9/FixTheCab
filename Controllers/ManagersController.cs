@@ -21,6 +21,35 @@ public class ManagersController : Controller
         ViewBag.TotalOrders = await _db.ServiceOrders.CountAsync();
         ViewBag.TotalRevenue = await _db.ServiceOrders.Where(o => o.Status == "completed" || o.Status == "paid").SumAsync(o => o.TotalPrice) ?? 0;
         ViewBag.PendingJobs = await _db.ServiceReceipts.CountAsync(r => r.Status == "pending");
+
+        // Last 30 days revenue
+        var past30Days = DateTime.Today.AddDays(-29);
+        
+        var revenueDataRaw = await _db.ServiceOrders
+            .Where(o => (o.Status == "completed" || o.Status == "paid") && o.CreatedAt >= past30Days)
+            .Select(o => new { o.CreatedAt, o.TotalPrice })
+            .ToListAsync();
+
+        var revenueData = revenueDataRaw
+            .Where(o => o.CreatedAt.HasValue)
+            .GroupBy(o => o.CreatedAt.Value.Date)
+            .Select(g => new { Date = g.Key, Total = g.Sum(x => x.TotalPrice) })
+            .ToList();
+
+        var labels = new List<string>();
+        var data = new List<decimal>();
+
+        for(int i = 0; i < 30; i++)
+        {
+            var d = past30Days.AddDays(i);
+            labels.Add(d.ToString("dd/MM"));
+            var dayTotal = revenueData.FirstOrDefault(x => x.Date == d)?.Total ?? 0;
+            data.Add(dayTotal);
+        }
+
+        ViewBag.ChartLabels = labels;
+        ViewBag.ChartData = data;
+
         return View();
     }
 
@@ -338,5 +367,40 @@ public class ManagersController : Controller
         }
         await _db.SaveChangesAsync();
         return Content($"Đã tạo thành công {count} xe chờ phân công!");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> SeedRevenue()
+    {
+        var mechanic = await _db.Employees.FirstOrDefaultAsync(e => e.Role == "mechanic");
+        var receipt = await _db.ServiceReceipts.FirstOrDefaultAsync();
+        
+        if (mechanic == null || receipt == null) 
+            return Content("Thiếu Master Data (Thợ hoặc Phiếu tiếp nhận) để tạo doanh thu mẫu.");
+
+        int count = 0;
+        var rand = new Random();
+        for (int i = 0; i < 30; i++)
+        {
+            // Create 1-4 random orders per day
+            int ordersPerDay = rand.Next(1, 5); 
+            for (int j = 0; j < ordersPerDay; j++)
+            {
+                var date = DateTime.Today.AddDays(-i).AddHours(rand.Next(8, 18));
+                _db.ServiceOrders.Add(new ServiceOrder
+                {
+                    ReceiptId = receipt.ReceiptId,
+                    MechanicId = mechanic.EmployeeId,
+                    Status = "paid",
+                    TotalPrice = rand.Next(150, 1500) * 1000, // 150k to 1.5M
+                    CreatedAt = date,
+                    StartedAt = date.AddMinutes(-30),
+                    CompletedAt = date.AddMinutes(rand.Next(20, 60))
+                });
+                count++;
+            }
+        }
+        await _db.SaveChangesAsync();
+        return Content($"Đã tạo thành công {count} đơn hàng mẫu trong 30 ngày qua!");
     }
 }

@@ -26,6 +26,12 @@
                         <li class="nav-item">
                             <a class="btn btn-primary btn-sm" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+                        @if (User.IsInRole("mechanic"))
+                        {
+                            <li class="nav-item">
+                                <a class="btn btn-warning btn-sm fw-bold" asp-controller="Mechanics" asp-action="LeaveRequests"><i class="bi bi-calendar-minus me-1"></i> Nghỉ Phép</a>
+                            </li>
+                        }
                     </ul>
 
                     <ul class="navbar-nav">
@@ -44,6 +50,10 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" asp-controller="Accounts" asp-action="Profile">View Profile</a></li>
+                                    @if (User.IsInRole("mechanic"))
+                                    {
+                                        <li><a class="dropdown-item fw-bold text-primary" asp-controller="Mechanics" asp-action="LeaveRequests"><i class="bi bi-calendar-minus me-1"></i> Đăng ký nghỉ phép</a></li>
+                                    }
                                     <li><a class="dropdown-item" asp-controller="Accounts" asp-action="EditProfile">Edit Profile</a></li>
                                     <li><a class="dropdown-item" asp-controller="Accounts" asp-action="ChangePassword">Change Password</a></li>
                                     <li><hr class="dropdown-divider" /></li>
