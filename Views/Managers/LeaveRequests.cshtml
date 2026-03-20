@@ -64,6 +64,7 @@
             $.post('/Managers/ActOnLeaveRequest', { id: id, action: action, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() })
                 .done(function(res) {
                     if (res.ok) {
+                        showSuccessToast("Đã " + actionText.toLowerCase() + " đơn nghỉ phép thành công!");
                         loadTable();
                     } else {
                         alert(res.error || "Có lỗi xảy ra");

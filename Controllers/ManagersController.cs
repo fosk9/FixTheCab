@@ -138,6 +138,7 @@ public class ManagersController : Controller
     {
         var rows = await _db.Set<MechanicWorkload>()
                             .OrderByDescending(x => x.ActiveJobCount)
+                            .AsNoTracking()
                             .ToListAsync();
         return PartialView("Partials/_MechanicWorkload", rows);
     }
@@ -237,5 +238,89 @@ public class ManagersController : Controller
         ViewBag.WeekStart = weekStart;
         ViewBag.WeekEnd = weekEnd;
         return PartialView("Partials/_SchedulesTable", rows);
+    }
+    [HttpGet]
+    public async Task<IActionResult> SeedSchedules()
+    {
+        var today = DateTime.Today;
+        var weekStart = DateOnly.FromDateTime(today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday));
+        
+        var employees = await _db.Employees.Where(e => e.Role == "mechanic" || e.Role == "manager").Take(5).ToListAsync();
+        if (!employees.Any()) return Content("Không tìm thấy nhân viên nào");
+
+        int count = 0;
+        foreach(var emp in employees)
+        {
+            for(int i = 0; i < 5; i++)
+            {
+                var targetDate = weekStart.AddDays(i);
+                bool exists = await _db.WorkSchedules.AnyAsync(w => w.EmployeeId == emp.EmployeeId && w.WorkDate == targetDate);
+                if (!exists) 
+                {
+                    _db.WorkSchedules.Add(new WorkSchedule {
+                        EmployeeId = emp.EmployeeId,
+                        WorkDate = targetDate,
+                        Shift = i % 2 == 0 ? "morning" : "afternoon",
+                        CheckIn = new DateTime(targetDate.Year, targetDate.Month, targetDate.Day, 8, 0, 0),
+                        CheckOut = i < 3 ? new DateTime(targetDate.Year, targetDate.Month, targetDate.Day, 17, 30, 0) : null
+                    });
+                    count++;
+                }
+            }
+        }
+        await _db.SaveChangesAsync();
+        return Content($"Đã tạo thành công {count} bản ghi lịch làm việc mẫu cho tuần này!");
+    }
+    [HttpGet]
+    public async Task<IActionResult> SeedLeaves()
+    {
+        var employees = await _db.Employees.Where(e => e.Role == "mechanic" || e.Role == "cashier").Take(5).ToListAsync();
+        if (!employees.Any()) return Content("Không tìm thấy nhân viên.");
+
+        int count = 0;
+        var statuses = new[] { "pending", "approved", "rejected" };
+        var reasons = new[] { "Nghỉ ốm", "Việc gia đình", "Du lịch", "Khám sức khỏe", "Nghỉ phép năm" };
+        var rand = new Random();
+
+        foreach(var emp in employees)
+        {
+            for(int i = 0; i < 4; i++) // 4 per employee = 20 total
+            {
+                var targetDate = DateOnly.FromDateTime(DateTime.Today.AddDays(rand.Next(-10, 10)));
+                _db.LeaveRequests.Add(new LeaveRequest {
+                    EmployeeId = emp.EmployeeId,
+                    LeaveDate = targetDate,
+                    Reason = reasons[rand.Next(reasons.Length)],
+                    Status = statuses[rand.Next(statuses.Length)]
+                });
+                count++;
+            }
+        }
+        await _db.SaveChangesAsync();
+        return Content($"Đã tạo thành công {count} đơn nghỉ phép mẫu!");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> SeedAssignments()
+    {
+        var customer = await _db.Customers.FirstOrDefaultAsync();
+        var bike = await _db.Bikes.FirstOrDefaultAsync();
+        var cashier = await _db.Employees.FirstOrDefaultAsync(e => e.Role == "cashier" || e.Role == "manager");
+        
+        if (customer == null || bike == null || cashier == null) return Content("Thiếu Master Data (Khách, Xe, Thu ngân). Bắt buộc phải có sẵn trong database mới tạo được.");
+
+        int count = 0;
+        for(int i = 0; i < 15; i++)
+        {
+            _db.ServiceReceipts.Add(new ServiceReceipt {
+                BikeId = bike.BikeId,
+                CreatedBy = cashier.EmployeeId,
+                Status = "pending",
+                CreatedAt = DateTime.Now.AddHours(-i)
+            });
+            count++;
+        }
+        await _db.SaveChangesAsync();
+        return Content($"Đã tạo thành công {count} xe chờ phân công!");
     }
 }
