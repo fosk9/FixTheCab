@@ -54,7 +54,7 @@ Mở file `appsettings.json` và cập nhật chuỗi kết nối tới Server c
 ```
 
 ### Bước 3: Chạy ứng dụng
-SỬ dụng terminal tại thư mục dự án và chạy lệnh:
+Sử dụng terminal tại thư mục dự án và chạy lệnh:
 ```bash
 dotnet build
 dotnet run
