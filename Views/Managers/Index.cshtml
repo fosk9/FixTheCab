@@ -47,12 +47,74 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-4">
-    <div class="card-body p-5 text-center text-muted">
-        <i class="bi bi-bar-chart-line" style="font-size: 3rem;"></i>
-        <h5 class="mt-3">Biểu đồ chi tiết đang trong giai đoạn phát triển</h5>
-        <p>Chọn các Tab bên trên để quản lý Kho Phụ Tùng, Lịch làm việc và Phân công.</p>
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0"><i class="bi bi-graph-up-arrow me-2 text-primary"></i> Biểu đồ Doanh Thu (30 Ngày Gần Nhất)</h5>
+    </div>
+    <div class="card-body p-4">
+        <canvas id="revenueChart" style="max-height: 400px;"></canvas>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(function() {
+            var ctx = document.getElementById('revenueChart').getContext('2d');
+            var labels = @Html.Raw(Json.Serialize(ViewBag.ChartLabels));
+            var data = @Html.Raw(Json.Serialize(ViewBag.ChartData));
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Doanh Thu (VNĐ)',
+                        data: data,
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointBackgroundColor: 'rgba(13, 110, 253, 1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                                    if (value >= 1000) return (value / 1000) + 'k';
+                                    return value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toLocaleString('vi-VN') + ' đ';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}
 
 <style>
     .file-border-left { border-left: 5px solid transparent !important; }

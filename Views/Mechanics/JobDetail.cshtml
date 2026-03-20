@@ -1,0 +1,250 @@
+@model PMPRacing.ViewModels.JobDetailVm
+@{
+    ViewData["Title"] = "Chi tiết sửa chữa #" + Model.OrderId;
+    var allParts = ViewBag.AllParts as List<PMPRacing.Models.Part>;
+    var allServices = ViewBag.AllServices as List<PMPRacing.Models.Service>;
+}
+
+<div class="container-fluid py-4 bg-light min-vh-100">
+    <!-- Header -->
+    <div class="row align-items-center mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Sửa chữa #@Model.OrderId</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold mb-0">@Model.LicensePlate <span class="badge bg-warning text-dark fs-6 ms-2">@Model.Status</span></h2>
+            <div class="text-muted">@Model.BikeModel — @Model.CustomerName</div>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-success btn-lg px-4 rounded-pill shadow-sm" id="complete-job-btn">
+                <i class="bi bi-check2-circle me-1"></i> Hoàn Tất Sửa Chữa
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Parts Section -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-nut me-2 text-primary"></i> Phụ Tùng Thay Thế</h5>
+                    <button class="btn btn-outline-primary btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#addPartModal">
+                        <i class="bi bi-plus-lg me-1"></i> Thêm phụ tùng
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light text-muted small text-uppercase">
+                                <tr>
+                                    <th class="ps-4">Tên phụ tùng</th>
+                                    <th>Số lượng</th>
+                                    <th>Đơn giá</th>
+                                    <th class="text-end pe-4">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.SelectedParts.Any())
+                                {
+                                    <tr><td colspan="4" class="text-center py-4 text-muted">Chưa có phụ tùng nào được thêm.</td></tr>
+                                }
+                                @foreach (var p in Model.SelectedParts)
+                                {
+                                    <tr>
+                                        <td class="ps-4 fw-medium text-dark">@p.Part?.PartName</td>
+                                        <td>@p.Quantity</td>
+                                        <td>@((p.Price ?? 0).ToString("N0")) đ</td>
+                                        <td class="text-end pe-4 fw-bold">@(((p.Price ?? 0) * (p.Quantity ?? 0)).ToString("N0")) đ</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white text-end py-3">
+                    <span class="text-muted me-2">Tổng phụ tùng:</span>
+                    <span class="fs-5 fw-bold text-primary">@Model.PartsTotal.ToString("N0") đ</span>
+                </div>
+            </div>
+
+            <!-- Services Section -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-hammer me-2 text-primary"></i> Dịch Vụ & Tiền Công</h5>
+                    <button class="btn btn-outline-primary btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+                        <i class="bi bi-plus-lg me-1"></i> Thêm dịch vụ
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light text-muted small text-uppercase">
+                                <tr>
+                                    <th class="ps-4">Hạng mục dịch vụ</th>
+                                    <th class="text-end pe-4">Tiền công</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.SelectedServices.Any())
+                                {
+                                    <tr><td colspan="2" class="text-center py-4 text-muted">Chưa có hạng mục dịch vụ nào.</td></tr>
+                                }
+                                @foreach (var s in Model.SelectedServices)
+                                {
+                                    <tr>
+                                        <td class="ps-4 fw-medium text-dark">@s.Service?.ServiceName</td>
+                                        <td class="text-end pe-4 fw-bold">@((s.Price ?? 0).ToString("N0")) đ</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white text-end py-3">
+                    <span class="text-muted me-2">Tổng tiền công:</span>
+                    <span class="fs-5 fw-bold text-primary">@Model.ServicesTotal.ToString("N0") đ</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Summary -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 24px;">
+                <div class="card-header bg-dark text-white py-3">
+                    <h5 class="mb-0 fw-bold">Tổng Thanh Toán Dự Kiến</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Tiền phụ tùng</span>
+                        <span class="fw-semibold">@Model.PartsTotal.ToString("N0") đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                        <span class="text-muted">Tiền dịch vụ</span>
+                        <span class="fw-semibold">@Model.ServicesTotal.ToString("N0") đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold fs-5">TỔNG CỘNG</span>
+                        <span class="fw-bold fs-4 text-danger">@Model.GrandTotal.ToString("N0") đ</span>
+                    </div>
+                    
+                    <hr class="my-3">
+                    <div class="alert alert-info py-2 small mb-0">
+                        <i class="bi bi-info-circle me-1"></i> Dữ liệu này sẽ được gửi cho Thu ngân để xuất hóa đơn ngay sau khi bạn bấm hoàn tất.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm Phụ Tùng -->
+<div class="modal fade" id="addPartModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">Chọn Phụ Tùng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addPartForm">
+                <input type="hidden" name="orderId" value="@Model.OrderId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tên phụ tùng</label>
+                        <select class="form-select select2" name="partId" required>
+                            <option value="">-- Tìm phụ tùng --</option>
+                            @foreach (var p in allParts)
+                            {
+                                <option value="@p.PartId" data-price="@p.Price">@p.PartName (Còn: @p.Stock) - @((p.Price ?? 0).ToString("N0")) đ</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số lượng</label>
+                        <input type="number" name="quantity" class="form-control" value="1" min="1" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Thêm vào đơn</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm Dịch Vụ -->
+<div class="modal fade" id="addServiceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">Chọn Dịch Vụ / Tiền Công</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addServiceForm">
+                <input type="hidden" name="orderId" value="@Model.OrderId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Hạng mục</label>
+                        <select class="form-select" name="serviceId" required>
+                            <option value="">-- Tìm dịch vụ --</option>
+                            @foreach (var s in allServices)
+                            {
+                                <option value="@s.ServiceId">@s.ServiceName - @((s.Price ?? 0).ToString("N0")) đ</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Thêm vào đơn</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function() {
+            // Thêm phụ tùng
+            $('#addPartForm').submit(function(e) {
+                e.preventDefault();
+                const data = $(this).serialize();
+                $.post('/Mechanics/AddPart', data, function(res) {
+                    if (res.ok) window.location.reload();
+                    else alert('Lỗi: ' + res.message);
+                });
+            });
+
+            // Thêm dịch vụ
+            $('#addServiceForm').submit(function(e) {
+                e.preventDefault();
+                const data = $(this).serialize();
+                $.post('/Mechanics/AddService', data, function(res) {
+                    if (res.ok) window.location.reload();
+                    else alert('Lỗi: ' + res.message);
+                });
+            });
+
+            // Hoàn tất công việc
+            $('#complete-job-btn').click(function() {
+                if (confirm('Bạn có chắc chắn đã hoàn thành sửa chữa chiếc xe này? Đơn sẽ được gửi đi để thanh toán.')) {
+                    $(this).prop('disabled', true);
+                    $.post('/Mechanics/CompleteJob', { orderId: @Model.OrderId }, function(res) {
+                        if (res.ok) {
+                            alert('Hoàn tất thành công! Chuyển về Dashboard.');
+                            window.location.href = '/Mechanics/Index';
+                        } else {
+                            alert('Lỗi: ' + res.message);
+                            $(this).prop('disabled', false);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}
