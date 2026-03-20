@@ -42,9 +42,8 @@ PMP Racing là ứng dụng quản lý gara/tiệm sửa xe máy được xây d
 
 ### Bước 1: Thiết lập Cơ sở dữ liệu
 1. Mở SQL Server Management Studio (SSMS).
-2. Chạy lần lượt 2 file script nằm trong thư mục gốc của dự án:
-   - `PMPShecma.sql`: Tạo cấu trúc bảng và các ràng buộc.
-   - `PMPSampleData.sql`: Nạp dữ liệu mẫu để kiểm thử.
+2. Chạy duy nhất file script nằm trong thư mục gốc của dự án:
+   - `PMP_Full_Setup.sql`: Tự động xóa/tạo mới Database và nạp đầy đủ cấu trúc + dữ liệu mẫu (12+ dòng/bảng, 31 ngày doanh thu).
 
 ### Bước 2: Cấu hình Connection String
 Mở file `appsettings.json` và cập nhật chuỗi kết nối tới Server của bạn:
@@ -69,8 +68,8 @@ Truy cập địa chỉ mặc định: `http://localhost:5043`
 ### Tài khoản đăng nhập (Mật khẩu mặc định: `123`)
 - **Admin:** `admin@pmpracing.vn`
 - **Quản lý:** `manager@pmpracing.vn`
-- **Thợ máy:** `phuoc@pmpracing.vn` <tên thợ máy>
-- **Thu ngân:** `cashier1@pmpracing.vn`
+- **Thợ máy:** `phuoc@pmpracing.vn` `<tên-thợ-máy>@pmpracing.vn`
+- **Thu ngân:** `cashier1@pmpracing.vn` `cashier2@pmpracing.vn`
 
 ### Quy trình kiểm thử đề xuất (End-to-End)
 1. **Tiếp nhận:** Dùng role Thu ngân tạo xe mới.
