@@ -46,7 +46,7 @@
                 <h5 class="modal-title"><i class="bi bi-wrench me-2"></i> Giao Việc Cho Thợ</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="assignForm">
+            <form id="assignForm" onsubmit="return false;">
                 <div class="modal-body p-4">
                     @Html.AntiForgeryToken()
                     <input type="hidden" id="ReceiptId" name="receiptId" />
@@ -104,6 +104,7 @@
                     .done(function (res) {
                         if (res.ok) {
                             $('#assignModal').modal('hide');
+                            showSuccessToast("Phân công thợ cơ khí thành công!");
                             // Reload both tables
                             loadPending();
                             loadWorkload();
@@ -133,7 +134,9 @@
                     $(html).find('tr[data-mechanic-id]').each(function() {
                         const id = $(this).data('mechanic-id');
                         const name = $(this).find('td:first').text().trim();
-                        const jobs = parseInt($(this).find('.badge').text().trim() || 0);
+                        let badgeText = $(this).find('.badge').text().trim();
+                        let jobs = parseInt(badgeText) || 0; // correctly falls back to 0 if NaN
+
                         currentMechanics.push({ id, name, jobs });
                     });
                 });

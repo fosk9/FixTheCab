@@ -86,11 +86,15 @@
 
         function setupAjaxForm(modalInst) {
             const form = $('#partModal form');
-            $.validator.unobtrusive.parse(form);
+            
+            // Check if validator script is loaded, otherwise just proceed
+            if ($.validator && $.validator.unobtrusive) {
+                $.validator.unobtrusive.parse(form);
+            }
 
             form.on('submit', function (e) {
                 e.preventDefault();
-                if (!form.valid()) return;
+                if ($.validator && !form.valid()) return;
 
                 const btn = form.find('button[type="submit"]');
                 const origText = btn.html();
@@ -99,7 +103,10 @@
                 $.post(form.attr('action'), form.serialize())
                     .done(function (res) {
                         if (res.ok) {
+                            form[0].reset();
                             modalInst.hide();
+                            $('.modal-backdrop').remove();
+                            showSuccessToast("Đã cập nhật phụ tùng thành công!");
                             loadTable();
                         } else {
                             $('#modalContainer').html(res);
