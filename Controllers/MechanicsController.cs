@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PMPRacing.Models;
+using Microsoft.AspNetCore.SignalR;
+using PMPRacing.Hubs;
 using PMPRacing.ViewModels;
 using System.Security.Claims;
 
@@ -11,10 +13,12 @@ namespace PMPRacing.Controllers;
 public class MechanicsController : Controller
 {
     private readonly PmpRacingContext _db;
+    private readonly IHubContext<AdminAccountsHub> _hub;
 
-    public MechanicsController(PmpRacingContext db)
+    public MechanicsController(PmpRacingContext db, IHubContext<AdminAccountsHub> hub)
     {
         _db = db;
+        _hub = hub;
     }
 
     public async Task<IActionResult> Index()
@@ -223,6 +227,8 @@ public class MechanicsController : Controller
 
         _db.LeaveRequests.Add(leave);
         await _db.SaveChangesAsync();
+
+        await _hub.Clients.All.SendAsync("leaveRequestSubmitted");
 
         return Json(new { ok = true });
     }

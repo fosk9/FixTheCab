@@ -135,6 +135,25 @@
             if (action === 'details') {
                 await openInvoiceOverlay('Chi tiết hóa đơn', '@Url.Action("InvoiceDetails","Cashiers")' + '?id=' + id);
             }
+            if (action === 'generate') {
+                if (confirm('Bạn có muốn lập hóa đơn cho đơn hàng này không?')) {
+                    const res = await fetch('@Url.Action("GenerateInvoice","Cashiers")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'fetch',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        },
+                        body: 'id=' + id
+                    });
+                    const json = await res.json();
+                    if (json.ok) {
+                        loadInvoiceTable(document.getElementById('invoiceSearchInput').value, document.getElementById('invoiceStatusFilter').value, currentPage);
+                    } else {
+                        alert(json.message || 'Lập hóa đơn thất bại.');
+                    }
+                }
+            }
             if (action === 'payment') {
                 // Redirect to simulated payment page
                 const amount = btn.getAttribute('data-amount') || 0;

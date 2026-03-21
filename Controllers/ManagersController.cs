@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PMPRacing.Models;
 using PMPRacing.ViewModels;
+using Microsoft.AspNetCore.SignalR;
+using PMPRacing.Hubs;
 
 namespace PMPRacing.Controllers;
 
@@ -10,10 +12,12 @@ namespace PMPRacing.Controllers;
 public class ManagersController : Controller
 {
     private readonly PmpRacingContext _db;
+    private readonly IHubContext<AdminAccountsHub> _hub;
 
-    public ManagersController(PmpRacingContext db)
+    public ManagersController(PmpRacingContext db, IHubContext<AdminAccountsHub> hub)
     {
         _db = db;
+        _hub = hub;
     }
 
     public async Task<IActionResult> Index() 
@@ -252,6 +256,7 @@ public class ManagersController : Controller
             req.ApprovedBy = managerId;
 
             await _db.SaveChangesAsync();
+            await _hub.Clients.All.SendAsync("leaveStatusChanged", id, req.Status);
             return Json(new { ok = true });
         }
         catch (Exception ex)

@@ -32,10 +32,28 @@
 </div>
 
 @section Scripts {
+    <script src="~/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script>
         let currentStatus = 'pending';
 
         $(function () {
+            // SignalR setup
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/adminAccounts")
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("leaveRequestSubmitted", function () {
+                console.log("SignalR: Có đơn nghỉ phép mới!");
+                if (currentStatus === 'pending') {
+                    loadTable();
+                }
+            });
+
+            connection.start()
+                .then(() => console.log("SignalR Connected!"))
+                .catch(err => console.error("SignalR error:", err.toString()));
+
             loadTable();
 
             $('#leaveTabs button[data-bs-toggle!="tab"]').on('click', function (e) {
