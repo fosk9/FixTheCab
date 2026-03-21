@@ -6,7 +6,7 @@
 <div class="container py-4">
     <div class="row align-items-center mb-4">
         <div class="col">
-            <h2 class="fw-bold text-primary"><i class="bi bi-calendar-event me-2"></i> Nghỉ Phép Của Tôi</h2>
+            <h2 class="fw-bold text-primary"><i class="bi bi-calendar-event me-2"></i> Nghỉ Phép Của Tôi (Thu Ngân)</h2>
         </div>
         <div class="col-auto">
             <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addLeaveModal">
@@ -89,7 +89,7 @@
     <script src="~/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script>
         $(function() {
-            // 1. Logic gửi đơn nghỉ phép
+            // 1. Logic gửi đơn nghỉ phép (Luôn phải chạy được)
             $('#leaveForm').on('submit', function(e) {
                 e.preventDefault();
                 const btn = $(this).find('button[type="submit"]');
@@ -102,43 +102,45 @@
                     __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                 };
 
-                $.post('@Url.Action("RequestLeave", "Mechanics")', data)
+                $.post('@Url.Action("RequestLeave", "Cashiers")', data)
                     .done(function(res) {
                         if (res.ok) {
                             alert('Đã gửi đơn thành công!');
-                            location.reload();
+                            location.assign('@Url.Action("LeaveRequests", "Cashiers")');
                         } else {
                             alert(res.message || "Lỗi khi gửi yêu cầu.");
                             btn.prop('disabled', false).text(originalText);
                         }
                     })
-                    .fail(function() {
-                        alert("Lỗi kết nối máy chủ.");
+                    .fail(function(xhr) {
+                        console.error("Lỗi gửi đơn:", xhr.responseText);
+                        alert("Lỗi kết nối máy chủ. Vui lòng thử lại.");
                         btn.prop('disabled', false).text(originalText);
                     });
             });
 
-            // 2. Logic SignalR
+            // 2. Logic SignalR (Tách biệt để không làm hỏng form nếu lỗi)
             if (typeof signalR !== 'undefined') {
                 try {
                     const connection = new signalR.HubConnectionBuilder()
                         .withUrl("/hubs/adminAccounts")
                         .withAutomaticReconnect()
+                        .configureLogging(signalR.LogLevel.Warning)
                         .build();
 
                     connection.on("leaveStatusChanged", function (id, status) {
-                        console.log("SignalR: Đã cập nhật trạng thái đơn:", id, status);
+                        console.log("SignalR: Trạng thái đơn " + id + " đã thay đổi thành " + status);
                         window.location.reload();
                     });
 
                     connection.start()
-                        .then(() => console.log("SignalR: Connected!"))
-                        .catch(err => console.warn("SignalR connection failed:", err.toString()));
+                        .then(() => console.log("SignalR: Đã kết nối thành công!"))
+                        .catch(err => console.warn("SignalR: Không thể kết nối:", err.toString()));
                 } catch (err) {
-                    console.error("SignalR Init error:", err);
+                    console.error("SignalR: Lỗi khởi tạo:", err);
                 }
             } else {
-                console.warn("SignalR library not found.");
+                console.warn("SignalR: Thư viện không khả dụng. Tính năng cập nhật thời gian thực sẽ bị tắt.");
             }
         });
     </script>

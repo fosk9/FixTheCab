@@ -4,7 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using PMPRacing.Models;
 using PMPRacing.ViewModels;
+using Microsoft.AspNetCore.SignalR;
+using PMPRacing.Hubs;
 using PMPRacing.Services.Email;
+using System.Security.Claims;
 
 namespace PMPRacing.Controllers;
 
@@ -14,12 +17,14 @@ public class CashiersController : Controller
     private readonly PmpRacingContext _db;
     private readonly IMemoryCache _cache;
     private readonly EmailApi _emailApi;
+    private readonly IHubContext<AdminAccountsHub> _hub;
 
-    public CashiersController(PmpRacingContext db, IMemoryCache cache, EmailApi emailApi)
+    public CashiersController(PmpRacingContext db, IMemoryCache cache, EmailApi emailApi, IHubContext<AdminAccountsHub> hub)
     {
         _db = db;
         _cache = cache;
         _emailApi = emailApi;
+        _hub = hub;
     }
 
     public IActionResult Index() => View();
@@ -91,7 +96,7 @@ public class CashiersController : Controller
             .Include(o => o.Receipt)
             .ThenInclude(r => r!.Bike)
             .ThenInclude(b => b!.Customer)
-            .Include(o => o.ServiceOrderItems)
+            .Include(o => o.ServiceOrderItems).ThenInclude(si => si.Service)
             .Include(o => o.OrderParts)
             .ThenInclude(op => op.Part)
             .AsNoTracking()
@@ -140,6 +145,19 @@ public class CashiersController : Controller
         };
 
         return PartialView("Partials/_InvoiceDetails", viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> GenerateInvoice(int id)
+    {
+        var order = await _db.ServiceOrders.FindAsync(id);
+        if (order == null) return NotFound();
+        if (order.Status != "completed") return BadRequest("Đơn hàng chưa hoàn thành.");
+
+        order.Status = "awaiting_payment";
+        await _db.SaveChangesAsync();
+        return Json(new { ok = true });
     }
 
     #endregion
@@ -690,7 +708,7 @@ public class CashiersController : Controller
         if (order == null) return NotFound();
 
         ViewBag.OrderId = orderId;
-        ViewBag.Amount = amount;
+        ViewBag.Amount = order.TotalPrice ?? 0;
         ViewBag.CustomerName = order.Receipt?.Bike?.Customer?.Name ?? "Khách hàng";
         ViewBag.Description = $"Thanh toán hóa đơn #{orderId}";
 
@@ -722,11 +740,16 @@ public class CashiersController : Controller
                     PaidAt = DateTime.Now
                 };
                 _db.Payments.Add(payment);
-
-                // Update order status
-                order.Status = "paid";
-                await _db.SaveChangesAsync();
             }
+            else
+            {
+                existingPayment.Status = "completed";
+                existingPayment.PaidAt = DateTime.Now;
+            }
+
+            // Always update order status to paid
+            order.Status = "paid";
+            await _db.SaveChangesAsync();
 
             return RedirectToAction("PaymentSuccess", new { orderId });
         }
@@ -757,10 +780,50 @@ public class CashiersController : Controller
         }
     }
 
+    #region Leave Request
+
+    [HttpGet]
+    public async Task<IActionResult> LeaveRequests()
+    {
+        var employeeIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(employeeIdStr, out int employeeId)) return Unauthorized();
+
+        var requests = await _db.LeaveRequests
+            .Where(l => l.EmployeeId == employeeId)
+            .OrderByDescending(l => l.LeaveDate)
+            .ToListAsync();
+
+        return View(requests);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RequestLeave(DateOnly date, string reason)
+    {
+        var employeeIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(employeeIdStr, out int employeeId)) return Unauthorized();
+
+        var leave = new LeaveRequest
+        {
+            EmployeeId = employeeId,
+            LeaveDate = date,
+            Reason = reason,
+            Status = "pending"
+        };
+
+        _db.LeaveRequests.Add(leave);
+        await _db.SaveChangesAsync();
+
+        await _hub.Clients.All.SendAsync("leaveRequestSubmitted");
+
+        return Json(new { ok = true });
+    }
+
+    #endregion
+
     private int? GetCurrentEmployeeId()
     {
-        // TODO: Implement actual logic to get current employee ID from claims
-        // For now, return null or a default value
+        var idStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(idStr, out int id)) return id;
         return null;
     }
 
