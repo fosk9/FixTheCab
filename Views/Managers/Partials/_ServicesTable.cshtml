@@ -1,0 +1,39 @@
+@model IEnumerable<ServiceListRowVm>
+
+@if (!Model.Any())
+{
+    <div class="text-center text-muted py-4">
+        <i class="fas fa-tools fa-3x mb-3 text-light"></i>
+        <div>Không tìm thấy dịch vụ nào.</div>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">ID</th>
+                    <th>Tên dịch vụ</th>
+                    <th>Đơn giá</th>
+                    <th class="text-end pe-3">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td class="ps-3"><span class="text-muted smaller">#@s.ServiceId</span></td>
+                        <td><strong>@s.ServiceName</strong></td>
+                        <td><span class="text-primary fw-bold">@s.Price?.ToString("N0") VNĐ</span></td>
+                        <td class="text-end pe-3">
+                            <button class="btn btn-sm btn-outline-primary" data-service-action="edit" data-id="@s.ServiceId" title="Sửa dịch vụ / Chỉnh giá">
+                                <i class="fas fa-edit me-1"></i>Sửa
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

@@ -24,4 +24,14 @@
             <i class="bi bi-calendar-x me-1"></i> Nghỉ Phép
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Services" ? "active" : "")" href="/Managers/Services">
+            <i class="bi bi-tools me-1"></i> Dịch Vụ
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "WorkHistory" ? "active" : "")" href="/Managers/WorkHistory">
+            <i class="bi bi-clock-history me-1"></i> Lịch Sử Thợ
+        </a>
+    </li>
 </ul>

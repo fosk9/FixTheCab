@@ -1,0 +1,32 @@
+@model ServiceEditVm
+
+<div class="modal fade" id="serviceEditModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa dịch vụ / Cập nhật giá</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/Managers/ServiceEdit" method="post" onsubmit="return handleServiceSubmit(this)">
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.ServiceId)
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label font-bold text-muted small uppercase">Tên dịch vụ</label>
+                        <input type="text" asp-for="ServiceName" class="form-control" placeholder="Ví dụ: Thay dầu, Bảo dưỡng toàn bộ...">
+                        <span asp-validation-for="ServiceName" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-bold text-muted small uppercase">Đơn giá (VNĐ)</label>
+                        <input type="number" asp-for="Price" class="form-control">
+                        <span asp-validation-for="Price" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary px-4">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

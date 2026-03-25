@@ -1,0 +1,77 @@
+@{
+    ViewData["Title"] = "Lịch sử sửa chữa";
+    var mechanics = ViewBag.Mechanics as List<Employee>;
+}
+
+@await Html.PartialAsync("Partials/_ManagerNav")
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="h4"><i class="fas fa-history me-2 text-primary"></i>Lịch sử Sửa chữa theo Nhân viên</h2>
+        <p class="text-muted small">Tra cứu danh sách xe mà một nhân viên đã thực hiện sửa chữa trong ngày.</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body bg-light rounded shadow-inner">
+        <form id="historyFilterForm" class="row align-items-end g-3">
+            <div class="col-md-4">
+                <label class="form-label font-bold text-muted small uppercase">Chọn Nhân viên (Thợ máy)</label>
+                <select id="mechanicId" name="mechanicId" class="form-select border-0 shadow-sm">
+                    <option value="">-- Tất cả nhân viên --</option>
+                    @if (mechanics != null)
+                    {
+                        foreach (var m in mechanics)
+                        {
+                            <option value="@m.EmployeeId">@m.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label font-bold text-muted small uppercase">Chọn Ngày</label>
+                <input type="date" id="targetDate" name="date" class="form-control border-0 shadow-sm" value="@DateTime.Today.ToString("yyyy-MM-dd")">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100 shadow-sm">
+                    <i class="fas fa-search me-1"></i>Tra cứu
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div id="historyTableContainer">
+            <div class="text-center py-5">
+                <p class="text-muted">Vui lòng nhấn Tra cứu để xem kết quả.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#historyFilterForm').submit(function (e) {
+                e.preventDefault();
+                loadHistory();
+            });
+            
+            // Auto-load once on page load
+            loadHistory();
+        });
+
+        function loadHistory() {
+            const mechanicId = $('#mechanicId').val();
+            const date = $('#targetDate').val();
+            
+            $('#historyTableContainer').html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>');
+            
+            $.get('/Managers/WorkHistoryTable', { mechanicId: mechanicId, date: date }, function (html) {
+                $('#historyTableContainer').html(html);
+            });
+        }
+    </script>
+}

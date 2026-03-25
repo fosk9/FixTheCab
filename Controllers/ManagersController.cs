@@ -26,11 +26,21 @@ public class ManagersController : Controller
         ViewBag.TotalRevenue = await _db.ServiceOrders.Where(o => o.Status == "completed" || o.Status == "paid").SumAsync(o => o.TotalPrice) ?? 0;
         ViewBag.PendingJobs = await _db.ServiceReceipts.CountAsync(r => r.Status == "pending");
 
-        // Last 30 days revenue
-        var past30Days = DateTime.Today.AddDays(-29);
+        // Set default dates for the view (last 30 days)
+        ViewBag.StartDate = DateTime.Today.AddDays(-29).ToString("yyyy-MM-dd");
+        ViewBag.EndDate = DateTime.Today.ToString("yyyy-MM-dd");
+
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetRevenueChartData(DateTime start, DateTime end)
+    {
+        // Ensure end date includes the entire day
+        var endOfPeriod = end.Date.AddDays(1);
         
         var revenueDataRaw = await _db.ServiceOrders
-            .Where(o => (o.Status == "completed" || o.Status == "paid") && o.CreatedAt >= past30Days)
+            .Where(o => (o.Status == "completed" || o.Status == "paid") && o.CreatedAt >= start && o.CreatedAt < endOfPeriod)
             .Select(o => new { o.CreatedAt, o.TotalPrice })
             .ToListAsync();
 
@@ -43,18 +53,14 @@ public class ManagersController : Controller
         var labels = new List<string>();
         var data = new List<decimal>();
 
-        for(int i = 0; i < 30; i++)
+        for (var d = start.Date; d <= end.Date; d = d.AddDays(1))
         {
-            var d = past30Days.AddDays(i);
             labels.Add(d.ToString("dd/MM"));
             var dayTotal = revenueData.FirstOrDefault(x => x.Date == d)?.Total ?? 0;
             data.Add(dayTotal);
         }
 
-        ViewBag.ChartLabels = labels;
-        ViewBag.ChartData = data;
-
-        return View();
+        return Json(new { labels, data });
     }
 
     // ==========================================
@@ -407,5 +413,131 @@ public class ManagersController : Controller
         }
         await _db.SaveChangesAsync();
         return Content($"Đã tạo thành công {count} đơn hàng mẫu trong 30 ngày qua!");
+    }
+
+    // ==========================================
+    // Quản Lý Dịch Vụ (Services)
+    // ==========================================
+    [HttpGet]
+    public IActionResult Services() => View();
+
+    [HttpGet]
+    public async Task<IActionResult> ServicesTable(string search = "")
+    {
+        var query = _db.Services.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            search = search.Trim();
+            query = query.Where(s => s.ServiceName != null && s.ServiceName.Contains(search));
+        }
+
+        var rows = await query
+            .OrderBy(s => s.ServiceId)
+            .Select(s => new ServiceListRowVm
+            {
+                ServiceId = s.ServiceId,
+                ServiceName = s.ServiceName ?? "Unknown",
+                Price = s.Price
+            })
+            .ToListAsync();
+
+        return PartialView("Partials/_ServicesTable", rows);
+    }
+
+    [HttpGet]
+    public IActionResult ServiceCreate() => PartialView("Partials/_ServiceCreate", new ServiceCreateVm());
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ServiceCreate(ServiceCreateVm model)
+    {
+        if (!ModelState.IsValid)
+            return PartialView("Partials/_ServiceCreate", model);
+
+        var newService = new Service
+        {
+            ServiceName = model.ServiceName.Trim(),
+            Price = model.Price
+        };
+
+        _db.Services.Add(newService);
+        await _db.SaveChangesAsync();
+        return Json(new { ok = true });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ServiceEdit(int id)
+    {
+        var s = await _db.Services.FindAsync(id);
+        if (s == null) return NotFound();
+
+        return PartialView("Partials/_ServiceEdit", new ServiceEditVm
+        {
+            ServiceId = s.ServiceId,
+            ServiceName = s.ServiceName ?? "",
+            Price = s.Price ?? 0
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ServiceEdit(ServiceEditVm model)
+    {
+        if (!ModelState.IsValid)
+            return PartialView("Partials/_ServiceEdit", model);
+
+        var s = await _db.Services.FindAsync(model.ServiceId);
+        if (s == null) return NotFound();
+
+        s.ServiceName = model.ServiceName.Trim();
+        s.Price = model.Price;
+
+        await _db.SaveChangesAsync();
+        return Json(new { ok = true });
+    }
+
+    // ==========================================
+    // Lịch Sử Sửa Chữa (Work History)
+    // ==========================================
+    [HttpGet]
+    public async Task<IActionResult> WorkHistory()
+    {
+        ViewBag.Mechanics = await _db.Employees
+            .Where(e => e.Role == "mechanic")
+            .ToListAsync();
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> WorkHistoryTable(int? mechanicId, DateTime? date)
+    {
+        var targetDate = date ?? DateTime.Today;
+        var startOfDay = targetDate.Date;
+        var endOfDay = startOfDay.AddDays(1);
+
+        var query = _db.ServiceOrders
+            .Include(o => o.Receipt).ThenInclude(r => r!.Bike).ThenInclude(b => b!.Customer)
+            .Where(o => o.CompletedAt >= startOfDay && o.CompletedAt < endOfDay)
+            .AsNoTracking();
+
+        if (mechanicId.HasValue)
+        {
+            query = query.Where(o => o.MechanicId == mechanicId);
+        }
+
+        var rows = await query
+            .OrderByDescending(o => o.CompletedAt)
+            .Select(o => new WorkHistoryRowVm
+            {
+                OrderId = o.OrderId,
+                LicensePlate = o.Receipt!.Bike!.LicensePlate ?? "N/A",
+                BikeModel = o.Receipt.Bike.BikeModel ?? "Unknown",
+                CustomerName = o.Receipt.Bike.Customer!.Name ?? "Unknown",
+                CompletedAt = o.CompletedAt
+            })
+            .ToListAsync();
+
+        return PartialView("Partials/_WorkHistoryTable", rows);
     }
 }

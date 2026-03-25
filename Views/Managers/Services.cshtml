@@ -1,0 +1,98 @@
+@{
+    ViewData["Title"] = "Quản lý dịch vụ";
+}
+
+@await Html.PartialAsync("Partials/_ManagerNav")
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h2 class="h4"><i class="fas fa-tools me-2 text-primary"></i>Quản lý Dịch vụ</h2>
+        <p class="text-muted small">Xem và điều chỉnh giá các dịch vụ sửa chữa.</p>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <button class="btn btn-primary" id="btnCreateService">
+            <i class="fas fa-plus me-1"></i>Thêm dịch vụ mới
+        </button>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" id="serviceSearch" class="form-control border-start-0 bg-light" placeholder="Tìm kiếm dịch vụ...">
+                </div>
+            </div>
+        </div>
+        <div id="servicesTableContainer">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Container -->
+<div id="modalContainer"></div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            loadServices();
+
+            let searchTimer;
+            $('#serviceSearch').on('input', function () {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(loadServices, 500);
+            });
+
+            $('#btnCreateService').click(function () {
+                $.get('/Managers/ServiceCreate', function (html) {
+                    $('#modalContainer').html(html);
+                    const modal = new bootstrap.Modal($('#serviceCreateModal')[0]);
+                    modal.show();
+                });
+            });
+
+            $(document).on('click', '[data-service-action="edit"]', function () {
+                const id = $(this).data('id');
+                $.get('/Managers/ServiceEdit/' + id, function (html) {
+                    $('#modalContainer').html(html);
+                    const modal = new bootstrap.Modal($('#serviceEditModal')[0]);
+                    modal.show();
+                });
+            });
+        });
+
+        function loadServices() {
+            const search = $('#serviceSearch').val();
+            $.get('/Managers/ServicesTable', { search: search }, function (html) {
+                $('#servicesTableContainer').html(html);
+            });
+        }
+
+        function handleServiceSubmit(form) {
+            $.ajax({
+                url: form.action,
+                type: 'POST',
+                data: $(form).serialize(),
+                success: function (res) {
+                    if (res.ok) {
+                        bootstrap.Modal.getInstance($(form).closest('.modal')[0]).hide();
+                        loadServices();
+                        // Show success toast or alert
+                    } else {
+                        $(form).closest('.modal-content').replaceWith($(res).find('.modal-content'));
+                    }
+                }
+            });
+            return false;
+        }
+    </script>
+}

@@ -47,10 +47,19 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-4">
-    <div class="card-header bg-white py-3">
-        <h5 class="mb-0"><i class="bi bi-graph-up-arrow me-2 text-primary"></i> Biểu đồ Doanh Thu (30 Ngày Gần Nhất)</h5>
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-graph-up-arrow me-2 text-primary"></i> Biểu đồ Doanh Thu</h5>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="text-muted small">Từ:</span>
+            <input type="date" id="startDate" class="form-control form-control-sm" value="@ViewBag.StartDate">
+            <span class="text-muted small">Đến:</span>
+            <input type="date" id="endDate" class="form-control form-control-sm" value="@ViewBag.EndDate">
+        </div>
     </div>
-    <div class="card-body p-4">
+    <div class="card-body p-4 position-relative">
+        <div id="chartLoading" class="position-absolute top-50 start-50 translate-middle d-none">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
         <canvas id="revenueChart" style="max-height: 400px;"></canvas>
     </div>
 </div>
@@ -60,58 +69,81 @@
     <script>
         $(function() {
             var ctx = document.getElementById('revenueChart').getContext('2d');
-            var labels = @Html.Raw(Json.Serialize(ViewBag.ChartLabels));
-            var data = @Html.Raw(Json.Serialize(ViewBag.ChartData));
+            var revenueChart = null;
 
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Doanh Thu (VNĐ)',
-                        data: data,
-                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                        borderColor: 'rgba(13, 110, 253, 1)',
-                        borderWidth: 2,
-                        pointRadius: 3,
-                        pointBackgroundColor: 'rgba(13, 110, 253, 1)',
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
-                                    if (value >= 1000) return (value / 1000) + 'k';
-                                    return value;
+            function initChart(labels, data) {
+                if (revenueChart) {
+                    revenueChart.destroy();
+                }
+
+                revenueChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Doanh Thu (VNĐ)',
+                            data: data,
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            borderColor: 'rgba(13, 110, 253, 1)',
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointBackgroundColor: 'rgba(13, 110, 253, 1)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                                        if (value >= 1000) return (value / 1000) + 'k';
+                                        return value;
+                                    }
                                 }
                             }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += context.parsed.y.toLocaleString('vi-VN') + ' đ';
+                                        }
+                                        return label;
                                     }
-                                    if (context.parsed.y !== null) {
-                                        label += context.parsed.y.toLocaleString('vi-VN') + ' đ';
-                                    }
-                                    return label;
                                 }
                             }
                         }
                     }
-                }
+                });
+            }
+
+            function updateChart() {
+                var start = $('#startDate').val();
+                var end = $('#endDate').val();
+
+                $('#chartLoading').removeClass('d-none');
+                $.get('/Managers/GetRevenueChartData', { start: start, end: end }, function(res) {
+                    initChart(res.labels, res.data);
+                    $('#chartLoading').addClass('d-none');
+                });
+            }
+
+            $('#startDate, #endDate').on('change', function() {
+                updateChart();
             });
+
+            // Initial load
+            updateChart();
         });
     </script>
 }
