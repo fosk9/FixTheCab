@@ -12,6 +12,7 @@ public class InvoiceListVm
     public decimal? TotalPrice { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
+    public string? MechanicName { get; set; }
 }
 
 public class InvoiceDetailVm
@@ -27,6 +28,7 @@ public class InvoiceDetailVm
     public DateTime? CreatedAt { get; set; }
     public DateTime? StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
+    public string? MechanicName { get; set; }
     public List<InvoiceItemVm> Items { get; set; } = new();
 }
 
