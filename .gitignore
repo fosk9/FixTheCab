@@ -60,3 +60,8 @@ _ReSharper*/
 *.vsp
 *.vspx
 *.sap
+/bin/Debug
+/bin/Debug
+/obj/Debug
+obj/PMPRacing.csproj.nuget.g.props
+/obj/Debug

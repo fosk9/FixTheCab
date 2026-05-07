@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "G:\\PRN222\\FinalProject\\PMPRacing\\PMPRacing\\PMPRacing.csproj": {}
+    "F:\\DoAn\\FixTheCab\\PMPRacing.csproj": {}
   },
   "projects": {
-    "G:\\PRN222\\FinalProject\\PMPRacing\\PMPRacing\\PMPRacing.csproj": {
+    "F:\\DoAn\\FixTheCab\\PMPRacing.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "G:\\PRN222\\FinalProject\\PMPRacing\\PMPRacing\\PMPRacing.csproj",
+        "projectUniqueName": "F:\\DoAn\\FixTheCab\\PMPRacing.csproj",
         "projectName": "PMPRacing",
-        "projectPath": "G:\\PRN222\\FinalProject\\PMPRacing\\PMPRacing\\PMPRacing.csproj",
-        "packagesPath": "C:\\Users\\Fosk Jesky\\.nuget\\packages\\",
-        "outputPath": "G:\\PRN222\\FinalProject\\PMPRacing\\PMPRacing\\obj\\",
+        "projectPath": "F:\\DoAn\\FixTheCab\\PMPRacing.csproj",
+        "packagesPath": "C:\\Users\\Dam Vinh Hung\\.nuget\\packages\\",
+        "outputPath": "F:\\DoAn\\FixTheCab\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Fosk Jesky\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Dam Vinh Hung\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -30,6 +30,7 @@
         },
         "frameworks": {
           "net8.0": {
+            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {}
           }
@@ -48,6 +49,7 @@
       },
       "frameworks": {
         "net8.0": {
+          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
             "BCrypt.Net-Next": {
@@ -90,6 +92,24 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.26, 8.0.26]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[8.0.26, 8.0.26]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.26, 8.0.26]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.26, 8.0.26]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -98,7 +118,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
