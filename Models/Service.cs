@@ -7,9 +7,13 @@ public partial class Service
 {
     public int ServiceId { get; set; }
 
+    public int? ShopId { get; set; }
+
     public string? ServiceName { get; set; }
 
     public decimal? Price { get; set; }
 
     public virtual ICollection<ServiceOrderItem> ServiceOrderItems { get; set; } = new List<ServiceOrderItem>();
+
+    public virtual Shop? Shop { get; set; }
 }

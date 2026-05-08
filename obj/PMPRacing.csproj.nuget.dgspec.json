@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "F:\\DoAn\\FixTheCab\\PMPRacing.csproj": {}
+    "f:\\DoAn\\FixTheCab\\PMPRacing.csproj": {}
   },
   "projects": {
-    "F:\\DoAn\\FixTheCab\\PMPRacing.csproj": {
+    "f:\\DoAn\\FixTheCab\\PMPRacing.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "F:\\DoAn\\FixTheCab\\PMPRacing.csproj",
+        "projectUniqueName": "f:\\DoAn\\FixTheCab\\PMPRacing.csproj",
         "projectName": "PMPRacing",
-        "projectPath": "F:\\DoAn\\FixTheCab\\PMPRacing.csproj",
+        "projectPath": "f:\\DoAn\\FixTheCab\\PMPRacing.csproj",
         "packagesPath": "C:\\Users\\Dam Vinh Hung\\.nuget\\packages\\",
-        "outputPath": "F:\\DoAn\\FixTheCab\\obj\\",
+        "outputPath": "f:\\DoAn\\FixTheCab\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -30,7 +30,6 @@
         },
         "frameworks": {
           "net8.0": {
-            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {}
           }
@@ -49,7 +48,6 @@
       },
       "frameworks": {
         "net8.0": {
-          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
             "BCrypt.Net-Next": {

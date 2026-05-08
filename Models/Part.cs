@@ -7,6 +7,8 @@ public partial class Part
 {
     public int PartId { get; set; }
 
+    public int? ShopId { get; set; }
+
     public string? PartName { get; set; }
 
     public decimal? Price { get; set; }
@@ -16,4 +18,6 @@ public partial class Part
     public int? WarningLevel { get; set; }
 
     public virtual ICollection<OrderPart> OrderParts { get; set; } = new List<OrderPart>();
+
+    public virtual Shop? Shop { get; set; }
 }

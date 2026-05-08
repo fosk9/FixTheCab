@@ -35,6 +35,57 @@ public class AccountsController : Controller
     }
 
     [AllowAnonymous]
+    [HttpGet]
+    public IActionResult Register()
+    {
+        return View(new RegisterViewModel());
+    }
+
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    [HttpPost]
+    public async Task<IActionResult> Register(RegisterViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var email = model.Email.Trim();
+        var exists = await _db.Employees.AsNoTracking()
+            .AnyAsync(e => e.Email != null && e.Email == email);
+        if (exists)
+        {
+            ModelState.AddModelError(nameof(model.Email), "This email is already in use.");
+            return View(model);
+        }
+
+        var employee = new Employee
+        {
+            Name = model.Name.Trim(),
+            Email = email,
+            Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim(),
+            Role = "cashier",
+            Status = "active",
+            Password = BCrypt.Net.BCrypt.HashPassword(model.Password),
+            CreatedAt = DateTime.Now
+        };
+
+        _db.Employees.Add(employee);
+        await _db.SaveChangesAsync();
+
+        try
+        {
+            await _emailApi.SendWelcomeAsync(email, employee.Name, model.Password);
+        }
+        catch
+        {
+            // Best effort only: registration should still succeed.
+        }
+
+        await RefreshSignInAsync(employee);
+        return RedirectToRoleHome(employee.Role ?? "cashier");
+    }
+
+    [AllowAnonymous]
     [ValidateAntiForgeryToken]
     [HttpPost]
     public async Task<IActionResult> Login(LoginViewModel model)
@@ -118,6 +169,92 @@ public class AccountsController : Controller
         return RedirectToRoleHome(dbRole);
     }
 
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult ForgotPassword()
+    {
+        return View(new ForgotPasswordViewModel());
+    }
+
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    [HttpPost]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var email = model.Email.Trim();
+        var employee = await _db.Employees.AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Email != null && e.Email == email);
+
+        if (employee != null)
+        {
+            var otp = Random.Shared.Next(100000, 999999).ToString();
+            var expires = TimeSpan.FromMinutes(5);
+            _cache.Set(GetResetOtpCacheKey(email), otp, expires);
+
+            try
+            {
+                await _emailApi.SendOtpAsync(email, otp, expires, "Forgot password");
+            }
+            catch
+            {
+                // Avoid account/email enumeration via response details.
+            }
+        }
+
+        TempData["ResetOtpSent"] = "If the email exists, an OTP has been sent.";
+        return RedirectToAction(nameof(ResetPassword), new { email });
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult ResetPassword(string? email = null)
+    {
+        return View(new ResetPasswordViewModel
+        {
+            Email = string.IsNullOrWhiteSpace(email) ? string.Empty : email.Trim()
+        });
+    }
+
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    [HttpPost]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+    {
+        model.Email = model.Email.Trim();
+
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var employee = await _db.Employees.FirstOrDefaultAsync(e => e.Email != null && e.Email == model.Email);
+        if (employee == null)
+        {
+            ModelState.AddModelError(nameof(model.Email), "Invalid email.");
+            return View(model);
+        }
+
+        if (!_cache.TryGetValue(GetResetOtpCacheKey(model.Email), out string? otp) || string.IsNullOrWhiteSpace(otp))
+        {
+            ModelState.AddModelError(nameof(model.OtpCode), "OTP is expired or not requested.");
+            return View(model);
+        }
+
+        if (!string.Equals(model.OtpCode.Trim(), otp, StringComparison.Ordinal))
+        {
+            ModelState.AddModelError(nameof(model.OtpCode), "Invalid OTP code.");
+            return View(model);
+        }
+
+        employee.Password = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+        await _db.SaveChangesAsync();
+        _cache.Remove(GetResetOtpCacheKey(model.Email));
+
+        TempData["PasswordResetSuccess"] = "Password reset successfully. Please log in.";
+        return RedirectToAction(nameof(Login));
+    }
+
     [Authorize]
     [ValidateAntiForgeryToken]
     [HttpPost]
@@ -171,7 +308,22 @@ public class AccountsController : Controller
         if (employee == null) return RedirectToAction("Login", "Accounts");
 
         employee.Name = model.Name.Trim();
-        // Email/Phone are view-only here per requirement.
+        var email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim();
+        var phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim();
+
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            var emailExists = await _db.Employees.AsNoTracking()
+                .AnyAsync(e => e.EmployeeId != id && e.Email != null && e.Email == email);
+            if (emailExists)
+            {
+                ModelState.AddModelError(nameof(model.Email), "Email is already used by another account.");
+                return View(model);
+            }
+        }
+
+        employee.Email = email;
+        employee.Phone = phone;
 
         if (model.ProfileImageFile is { Length: > 0 })
         {
@@ -309,6 +461,7 @@ public class AccountsController : Controller
     }
 
     private string GetOtpCacheKey(int employeeId) => $"otp:change_password:{employeeId}";
+    private static string GetResetOtpCacheKey(string email) => $"otp:forgot_password:{email.ToLowerInvariant()}";
 
     private async Task RefreshSignInAsync(Employee employee)
     {

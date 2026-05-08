@@ -452,6 +452,35 @@ CREATE TABLE LeaveRequests (
 );
 GO
 
+CREATE TABLE SystemBankAccounts (
+    AccountId     INT IDENTITY PRIMARY KEY,
+    AccountNumber VARCHAR(225)   NOT NULL,
+    AccountName   NVARCHAR(225)  NOT NULL,
+    BankName      NVARCHAR(255)  NOT NULL,
+    QrImageCode   NVARCHAR(500),           -- Mã ảnh QR hoặc đường dẫn ảnh
+    IsActive      BIT            DEFAULT 1, -- 1: Đang dùng, 0: Đã ngưng sử dụng
+    CreatedAt     DATETIME       DEFAULT GETDATE()
+);
+GO
+
+CREATE TABLE ShopBankAccounts (
+    AccountId     INT IDENTITY PRIMARY KEY,
+    ShopId        INT            NOT NULL,  -- FK liên kết với bảng Shops
+    AccountNumber VARCHAR(225)   NOT NULL,
+    AccountName   NVARCHAR(225)  NOT NULL,
+    BankName      NVARCHAR(255)  NOT NULL,
+    QrImageCode   NVARCHAR(500),           -- Mã ảnh QR hoặc đường dẫn ảnh của shop
+    IsActive      BIT            DEFAULT 1,
+    CreatedAt     DATETIME       DEFAULT GETDATE(),
+
+    CONSTRAINT FK_ShopBankAccounts_Shop
+        FOREIGN KEY (ShopId) REFERENCES Shops(ShopId)
+);
+GO
+
+CREATE INDEX IX_ShopBankAccounts_Shop ON ShopBankAccounts (ShopId);
+GO
+
 
 /* ============================================================
    VIEWS

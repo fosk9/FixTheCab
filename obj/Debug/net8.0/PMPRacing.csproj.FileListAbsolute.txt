@@ -150,9 +150,6 @@ G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\refint\PMPRacing.dll
 G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\PMPRacing.pdb
 G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\PMPRacing.genruntimeconfig.cache
 G:\PRN222\FinalProject\PMPRacing\PMPRacing\obj\Debug\net8.0\ref\PMPRacing.dll
-F:\DoAn\FixTheCab\obj\Debug\net8.0\PMPRacing.dll
-F:\DoAn\FixTheCab\obj\Debug\net8.0\refint\PMPRacing.dll
-F:\DoAn\FixTheCab\obj\Debug\net8.0\PMPRacing.pdb
 F:\DoAn\FixTheCab\bin\Debug\net8.0\appsettings.Development.json
 F:\DoAn\FixTheCab\bin\Debug\net8.0\libman.json
 F:\DoAn\FixTheCab\bin\Debug\net8.0\PMPRacing.staticwebassets.runtime.json
@@ -298,7 +295,9 @@ F:\DoAn\FixTheCab\obj\Debug\net8.0\staticwebassets.build.json.cache
 F:\DoAn\FixTheCab\obj\Debug\net8.0\staticwebassets.development.json
 F:\DoAn\FixTheCab\obj\Debug\net8.0\staticwebassets.build.endpoints.json
 F:\DoAn\FixTheCab\obj\Debug\net8.0\swae.build.ex.cache
-F:\DoAn\FixTheCab\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 F:\DoAn\FixTheCab\obj\Debug\net8.0\PMPRacing.csproj.Up2Date
+F:\DoAn\FixTheCab\obj\Debug\net8.0\PMPRacing.dll
+F:\DoAn\FixTheCab\obj\Debug\net8.0\refint\PMPRacing.dll
+F:\DoAn\FixTheCab\obj\Debug\net8.0\PMPRacing.pdb
 F:\DoAn\FixTheCab\obj\Debug\net8.0\PMPRacing.genruntimeconfig.cache
 F:\DoAn\FixTheCab\obj\Debug\net8.0\ref\PMPRacing.dll

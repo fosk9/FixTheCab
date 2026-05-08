@@ -7,6 +7,8 @@ public partial class PendingAssignmentQueue
 {
     public int ReceiptId { get; set; }
 
+    public int? ShopId { get; set; }
+
     public DateTime? ReceivedAt { get; set; }
 
     public string? CustomerName { get; set; }
