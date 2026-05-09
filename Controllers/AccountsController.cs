@@ -63,7 +63,6 @@ public class AccountsController : Controller
             Name = model.Name.Trim(),
             Email = email,
             Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim(),
-            Role = "cashier",
             Status = "active",
             Password = BCrypt.Net.BCrypt.HashPassword(model.Password),
             CreatedAt = DateTime.Now
@@ -71,6 +70,7 @@ public class AccountsController : Controller
 
         _db.Employees.Add(employee);
         await _db.SaveChangesAsync();
+        await EnsurePrimaryRoleAsync(employee.EmployeeId, "manager");
 
         try
         {
@@ -82,7 +82,7 @@ public class AccountsController : Controller
         }
 
         await RefreshSignInAsync(employee);
-        return RedirectToRoleHome(employee.Role ?? "cashier");
+        return RedirectToRoleHome(await GetPrimaryRoleAsync(employee.EmployeeId));
     }
 
     [AllowAnonymous]
@@ -105,7 +105,7 @@ public class AccountsController : Controller
         }
 
         var selectedRole = (model.Role ?? string.Empty).Trim().ToLowerInvariant();
-        var dbRole = (employee.Role ?? string.Empty).Trim().ToLowerInvariant();
+        var dbRole = await GetPrimaryRoleAsync(employee.EmployeeId);
         if (string.IsNullOrWhiteSpace(selectedRole) || selectedRole != dbRole)
         {
             ModelState.AddModelError(string.Empty, "Invalid email, role, or password.");
@@ -271,6 +271,7 @@ public class AccountsController : Controller
         var id = GetCurrentEmployeeId();
         var employee = await _db.Employees.AsNoTracking().FirstOrDefaultAsync(e => e.EmployeeId == id);
         if (employee == null) return RedirectToAction("Login", "Accounts");
+        ViewBag.Role = await GetPrimaryRoleAsync(id);
         return View(employee);
     }
 
@@ -463,9 +464,42 @@ public class AccountsController : Controller
     private string GetOtpCacheKey(int employeeId) => $"otp:change_password:{employeeId}";
     private static string GetResetOtpCacheKey(string email) => $"otp:forgot_password:{email.ToLowerInvariant()}";
 
+    private async Task<string> GetPrimaryRoleAsync(int employeeId)
+    {
+        var role = await _db.UserRoles
+            .AsNoTracking()
+            .Where(ur => ur.EmployeeId == employeeId)
+            .Select(ur => ur.Role.RoleName)
+            .FirstOrDefaultAsync();
+
+        var normalized = (role ?? "manager").Trim().ToLowerInvariant();
+        return normalized == "cashier" ? "manager" : normalized;
+    }
+
+    private async Task EnsurePrimaryRoleAsync(int employeeId, string roleName)
+    {
+        var normalizedRole = roleName.Trim().ToLowerInvariant();
+        if (normalizedRole == "cashier")
+            normalizedRole = "manager";
+        var role = await _db.Roles.FirstOrDefaultAsync(r => r.RoleName == normalizedRole);
+        if (role == null)
+            return;
+
+        var exists = await _db.UserRoles.AnyAsync(ur => ur.EmployeeId == employeeId && ur.RoleId == role.RoleId);
+        if (exists)
+            return;
+
+        _db.UserRoles.Add(new UserRole
+        {
+            EmployeeId = employeeId,
+            RoleId = role.RoleId
+        });
+        await _db.SaveChangesAsync();
+    }
+
     private async Task RefreshSignInAsync(Employee employee)
     {
-        var role = (employee.Role ?? string.Empty).Trim().ToLowerInvariant();
+        var role = await GetPrimaryRoleAsync(employee.EmployeeId);
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, employee.EmployeeId.ToString()),
@@ -490,7 +524,7 @@ public class AccountsController : Controller
         {
             "admin" => RedirectToAction("Index", "Admins"),
             "manager" => RedirectToAction("Index", "Managers"),
-            "cashier" => RedirectToAction("Index", "Cashiers"),
+            "cashier" => RedirectToAction("Index", "Managers"),
             "mechanic" => RedirectToAction("Index", "Mechanics"),
             _ => RedirectToAction("Index", "Home")
         };

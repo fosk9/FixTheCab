@@ -11,7 +11,7 @@ public class LoginViewModel
 
     [Required]
     [Display(Name = "Role")]
-    public string Role { get; set; } = "cashier";
+    public string Role { get; set; } = "manager";
 
     [Required]
     [DataType(DataType.Password)]

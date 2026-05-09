@@ -23,7 +23,7 @@ namespace PMPRacing.Controllers
                 {
                     "admin" => RedirectToAction("Index", "Admins"),
                     "manager" => RedirectToAction("Index", "Managers"),
-                    "cashier" => RedirectToAction("Index", "Cashiers"),
+                    "cashier" => RedirectToAction("Index", "Managers"),
                     "mechanic" => RedirectToAction("Index", "Mechanics"),
                     _ => View()
                 };

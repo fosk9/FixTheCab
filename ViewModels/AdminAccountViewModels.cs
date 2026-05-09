@@ -30,7 +30,7 @@ public class AdminEditAccountVm
 
     [Required]
     [StringLength(50)]
-    public string Role { get; set; } = "cashier";
+    public string Role { get; set; } = "manager";
 
     [Required]
     [StringLength(20)]
@@ -73,7 +73,7 @@ public class AdminCreateAccountVm
 
     [Required]
     [StringLength(50)]
-    public string Role { get; set; } = "cashier";
+    public string Role { get; set; } = "manager";
 
     [Required]
     [StringLength(20)]

@@ -26,7 +26,7 @@ else
                     <tr>
                         <td class="ps-4 fw-bold text-primary">
                             @item.Employee?.Name <br />
-                            <small class="text-muted fw-normal">@item.Employee?.Role</small>
+                            <small class="text-muted fw-normal">@item.Employee?.UserRoleEmployees.FirstOrDefault()?.Role?.RoleName</small>
                         </td>
                         <td>
                             @item.LeaveDate?.ToString("dd/MM/yyyy")

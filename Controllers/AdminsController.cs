@@ -50,7 +50,10 @@ public class AdminsController : Controller
         if (!string.IsNullOrWhiteSpace(role))
         {
             role = role.Trim().ToLowerInvariant();
-            query = query.Where(e => e.Role != null && e.Role == role);
+            var employeeIdsByRole = _db.UserRoles
+                .Where(ur => ur.Role.RoleName == role)
+                .Select(ur => ur.EmployeeId);
+            query = query.Where(e => employeeIdsByRole.Contains(e.EmployeeId));
         }
 
         // Apply status filter
@@ -68,7 +71,10 @@ public class AdminsController : Controller
                 Name = e.Name,
                 Email = e.Email,
                 Phone = e.Phone,
-                Role = e.Role,
+                Role = _db.UserRoles
+                    .Where(ur => ur.EmployeeId == e.EmployeeId)
+                    .Select(ur => ur.Role.RoleName)
+                    .FirstOrDefault(),
                 Status = e.Status,
                 CreatedAt = e.CreatedAt
             })
@@ -82,6 +88,7 @@ public class AdminsController : Controller
     {
         var employee = await _db.Employees.AsNoTracking().FirstOrDefaultAsync(e => e.EmployeeId == id);
         if (employee == null) return NotFound();
+        ViewBag.Role = await GetPrimaryRoleAsync(id);
         return PartialView("Partials/_AccountDetails", employee);
     }
 
@@ -96,7 +103,7 @@ public class AdminsController : Controller
             Name = e.Name,
             Email = e.Email,
             Phone = e.Phone,
-            Role = e.Role ?? "cashier",
+            Role = await GetPrimaryRoleAsync(e.EmployeeId),
             Status = e.Status ?? "active",
             ProfileImagePath = e.ProfileImagePath
         });
@@ -114,13 +121,13 @@ public class AdminsController : Controller
         employee.Name = model.Name.Trim();
         employee.Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim();
         employee.Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim();
-        employee.Role = model.Role.Trim().ToLowerInvariant();
         employee.Status = model.Status.Trim().ToLowerInvariant();
         employee.ProfileImagePath = string.IsNullOrWhiteSpace(model.ProfileImagePath) ? null : model.ProfileImagePath.Trim();
 
         if (!string.IsNullOrWhiteSpace(model.NewPassword))
             employee.Password = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
 
+        await SetPrimaryRoleAsync(employee.EmployeeId, model.Role);
         await _db.SaveChangesAsync();
         await _hub.Clients.All.SendAsync("accountsChanged");
         return Json(new { ok = true });
@@ -223,13 +230,14 @@ public class AdminsController : Controller
                 Name = model.Name.Trim(),
                 Email = email,
                 Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim(),
-                Role = model.Role.Trim().ToLowerInvariant(),
                 Status = model.Status.Trim().ToLowerInvariant(),
                 Password = BCrypt.Net.BCrypt.HashPassword(model.Password),
                 CreatedAt = DateTime.Now
             };
 
             _db.Employees.Add(employee);
+            await _db.SaveChangesAsync();
+            await SetPrimaryRoleAsync(employee.EmployeeId, model.Role);
             await _db.SaveChangesAsync();
             _cache.Remove(GetCreateOtpKey(email));
 
@@ -263,6 +271,41 @@ public class AdminsController : Controller
         catch
         {
             return false;
+        }
+    }
+
+    private async Task<string> GetPrimaryRoleAsync(int employeeId)
+    {
+        var role = await _db.UserRoles
+            .AsNoTracking()
+            .Where(ur => ur.EmployeeId == employeeId)
+            .Select(ur => ur.Role.RoleName)
+            .FirstOrDefaultAsync();
+        var normalized = (role ?? "manager").Trim().ToLowerInvariant();
+        return normalized == "cashier" ? "manager" : normalized;
+    }
+
+    private async Task SetPrimaryRoleAsync(int employeeId, string roleName)
+    {
+        var normalizedRole = roleName.Trim().ToLowerInvariant();
+        if (normalizedRole == "cashier")
+            normalizedRole = "manager";
+        var role = await _db.Roles.FirstOrDefaultAsync(r => r.RoleName == normalizedRole);
+        if (role == null)
+            return;
+
+        var current = await _db.UserRoles.FirstOrDefaultAsync(ur => ur.EmployeeId == employeeId);
+        if (current == null)
+        {
+            _db.UserRoles.Add(new UserRole
+            {
+                EmployeeId = employeeId,
+                RoleId = role.RoleId
+            });
+        }
+        else
+        {
+            current.RoleId = role.RoleId;
         }
     }
 }

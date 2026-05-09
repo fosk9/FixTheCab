@@ -171,8 +171,11 @@ public class ManagersController : Controller
     {
         var activeStatuses = new[] { "assigned", "in_progress", "processing" };
         
+        var mechanicIds = _db.UserRoles
+                            .Where(ur => ur.Role.RoleName == "mechanic")
+                            .Select(ur => ur.EmployeeId);
         var mechanics = await _db.Employees
-                            .Where(e => e.Role == "mechanic" && e.Status == "active")
+                            .Where(e => mechanicIds.Contains(e.EmployeeId) && e.Status == "active")
                             .AsNoTracking()
                             .ToListAsync();
 
@@ -228,7 +231,12 @@ public class ManagersController : Controller
     [HttpGet]
     public async Task<IActionResult> LeaveRequestsTable(string status = "pending")
     {
-        var query = _db.LeaveRequests.Include(l => l.Employee).Include(l => l.ApprovedByNavigation).AsNoTracking();
+        var query = _db.LeaveRequests
+            .Include(l => l.Employee)
+                .ThenInclude(e => e.UserRoleEmployees)
+                .ThenInclude(ur => ur.Role)
+            .Include(l => l.ApprovedByNavigation)
+            .AsNoTracking();
         
         status = status.Trim().ToLower();
         query = query.Where(l => l.Status == status);
@@ -280,6 +288,8 @@ public class ManagersController : Controller
 
         var rows = await _db.WorkSchedules
                             .Include(w => w.Employee)
+                                .ThenInclude(e => e.UserRoleEmployees)
+                                .ThenInclude(ur => ur.Role)
                             .Where(w => w.WorkDate >= weekStart && w.WorkDate <= weekEnd)
                             .OrderBy(w => w.WorkDate).ThenBy(w => w.Employee.Name)
                             .AsNoTracking()
@@ -295,7 +305,10 @@ public class ManagersController : Controller
         var today = DateTime.Today;
         var weekStart = DateOnly.FromDateTime(today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday));
         
-        var employees = await _db.Employees.Where(e => e.Role == "mechanic" || e.Role == "manager").Take(5).ToListAsync();
+        var employeeIds = _db.UserRoles
+            .Where(ur => ur.Role.RoleName == "mechanic" || ur.Role.RoleName == "manager")
+            .Select(ur => ur.EmployeeId);
+        var employees = await _db.Employees.Where(e => employeeIds.Contains(e.EmployeeId)).Take(5).ToListAsync();
         if (!employees.Any()) return Content("Không tìm thấy nhân viên nào");
 
         int count = 0;
@@ -324,7 +337,10 @@ public class ManagersController : Controller
     [HttpGet]
     public async Task<IActionResult> SeedLeaves()
     {
-        var employees = await _db.Employees.Where(e => e.Role == "mechanic" || e.Role == "cashier").Take(5).ToListAsync();
+        var employeeIds = _db.UserRoles
+            .Where(ur => ur.Role.RoleName == "mechanic" || ur.Role.RoleName == "manager")
+            .Select(ur => ur.EmployeeId);
+        var employees = await _db.Employees.Where(e => employeeIds.Contains(e.EmployeeId)).Take(5).ToListAsync();
         if (!employees.Any()) return Content("Không tìm thấy nhân viên.");
 
         int count = 0;
@@ -355,16 +371,19 @@ public class ManagersController : Controller
     {
         var customer = await _db.Customers.FirstOrDefaultAsync();
         var bike = await _db.Bikes.FirstOrDefaultAsync();
-        var cashier = await _db.Employees.FirstOrDefaultAsync(e => e.Role == "cashier" || e.Role == "manager");
+        var managerIds = _db.UserRoles
+            .Where(ur => ur.Role.RoleName == "manager")
+            .Select(ur => ur.EmployeeId);
+        var manager = await _db.Employees.FirstOrDefaultAsync(e => managerIds.Contains(e.EmployeeId));
         
-        if (customer == null || bike == null || cashier == null) return Content("Thiếu Master Data (Khách, Xe, Thu ngân). Bắt buộc phải có sẵn trong database mới tạo được.");
+        if (customer == null || bike == null || manager == null) return Content("Thiếu Master Data (Khách, Xe, Quản lý). Bắt buộc phải có sẵn trong database mới tạo được.");
 
         int count = 0;
         for(int i = 0; i < 15; i++)
         {
             _db.ServiceReceipts.Add(new ServiceReceipt {
                 BikeId = bike.BikeId,
-                CreatedBy = cashier.EmployeeId,
+                CreatedBy = manager.EmployeeId,
                 Status = "pending",
                 CreatedAt = DateTime.Now.AddHours(-i)
             });
@@ -377,7 +396,10 @@ public class ManagersController : Controller
     [HttpGet]
     public async Task<IActionResult> SeedRevenue()
     {
-        var mechanic = await _db.Employees.FirstOrDefaultAsync(e => e.Role == "mechanic");
+        var mechanicIds = _db.UserRoles
+            .Where(ur => ur.Role.RoleName == "mechanic")
+            .Select(ur => ur.EmployeeId);
+        var mechanic = await _db.Employees.FirstOrDefaultAsync(e => mechanicIds.Contains(e.EmployeeId));
         var receipt = await _db.ServiceReceipts.FirstOrDefaultAsync();
         
         if (mechanic == null || receipt == null) 

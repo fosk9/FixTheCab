@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace PMPRacing.Models;
 
-public partial class PmpracingContext : DbContext
+public partial class PmpRacingContext : DbContext
 {
-    public PmpracingContext()
+    public PmpRacingContext()
     {
     }
 
-    public PmpracingContext(DbContextOptions<PmpracingContext> options)
+    public PmpRacingContext(DbContextOptions<PmpRacingContext> options)
         : base(options)
     {
     }

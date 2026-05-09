@@ -11,7 +11,7 @@ using System.Security.Claims;
 
 namespace PMPRacing.Controllers;
 
-[Authorize(Roles = "cashier")]
+[Authorize(Roles = "manager")]
 public class CashiersController : Controller
 {
     private readonly PmpRacingContext _db;

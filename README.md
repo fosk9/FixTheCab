@@ -69,7 +69,7 @@ Truy cập địa chỉ mặc định: `http://localhost:5043`
 - **Admin:** `admin@pmpracing.vn`
 - **Quản lý:** `manager@pmpracing.vn`
 - **Thợ máy:** `phuoc@pmpracing.vn` `<tên-thợ-máy>@pmpracing.vn`
-- **Thu ngân:** `cashier1@pmpracing.vn` `cashier2@pmpracing.vn`
+- **Quản lý:** dùng tài khoản manager để thao tác toàn bộ nghiệp vụ thu ngân.
 
 ### Quy trình kiểm thử đề xuất (End-to-End)
 1. **Tiếp nhận:** Dùng role Thu ngân tạo xe mới.

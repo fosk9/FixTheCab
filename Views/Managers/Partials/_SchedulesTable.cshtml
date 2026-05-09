@@ -31,7 +31,7 @@ else
                         <td class="ps-4 fw-bold">@item.WorkDate?.ToString("dd/MM/yyyy")</td>
                         <td>
                             <span class="fw-bold text-primary">@item.Employee?.Name</span>
-                            <small class="text-muted d-block">@item.Employee?.Role</small>
+                            <small class="text-muted d-block">@item.Employee?.UserRoleEmployees.FirstOrDefault()?.Role?.RoleName</small>
                         </td>
                         <td>
                             @if (item.Shift == "morning") { <span class="badge bg-info text-dark">Sáng (Morning)</span> }
